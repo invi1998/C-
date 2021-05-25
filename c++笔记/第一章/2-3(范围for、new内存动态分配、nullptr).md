@@ -164,8 +164,9 @@ if(q == NULL)
 }
 
 //使用nullptr能够避免在整数和指针之间发生混淆。
-cout<<typeid(NULL).name()<<endl; 
-cout<<type(nullptr).name()<<endl; 
+cout<<typeid(NULL).name()<<endl;  //打印类型名typeid().name // int 型
+cout<<type(nullptr).name()<<endl;  // std::nullptr_t 类型
 
-//NULL和nullptr实际上是不同的类型
+//NULL和nullptr实际上是不同的类型，所以就会在调用重载函数的时候因为参数类型不同而调用不同的函数
+// 结论：对于指针的初始化和用到指针相关的场合，能用nullptr的就用nullptr取代NULL
 ```
