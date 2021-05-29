@@ -11,3 +11,6 @@ https://shimo.im/docs/yKTRGv3KcVwGHYgw/read
 // 图形学
 https://shimo.im/docs/TJK6DCWHHrdtDx6p/read
 https://shimo.im/docs/RDKhW69yDdRCjHYC/read
+
+// aiursoft
+https://www.aiursoft.com/?show=direct
