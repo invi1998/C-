@@ -149,7 +149,7 @@ for(auto vecitem:vecvalue)
 ```
 
 3.1范围for进一步讲解
-<font style="color: red; font-weight: blod; ">在for语句中（遍历一个容器等等类似操作中），千万不要改动vector容器的容量，增加/删除都不可以。</font>
+<font color="#F44336" style="font-weight: blod; ">在for语句中（遍历一个容器等等类似操作中），千万不要改动vector容器的容量，增加/删除都不可以。</font>
 ```c++
 for(auto vecitem:vecvalue)
 {
