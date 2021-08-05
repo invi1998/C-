@@ -172,7 +172,7 @@ int main(void)
 	q.name = "jisuanji";
 	q.eat();
 
-	//怎么讲父类指针转换为子类对象
+	//怎么将父类指针转换为子类对象
 	Man *m1 = (Man*)(p_human);//c语言强制类型转换，可以成功--但是要求明确知道是什么类型才安全，否则不安全
 	m1->eat();//调用Man中的eat()函数
 	Woman *w1 = (Woman*)p_human;	//转换为其他类型也成功，不安全

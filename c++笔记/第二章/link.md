@@ -14,3 +14,5 @@ https://shimo.im/docs/RDKhW69yDdRCjHYC/read
 
 // aiursoft
 https://www.aiursoft.com/?show=direct
+
+连通分量（查并集）
