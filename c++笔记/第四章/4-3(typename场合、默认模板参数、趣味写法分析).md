@@ -1,4 +1,202 @@
+（1）typename的使用场合
+
+（2）函数指针做其他函数的参数
+
+（3）函数模板趣味用法举例
+```c++
+#include <cstdio>
+#include <iostream>
+
+using namespace std;
+
+template <typename T, typename F>
+void testFunc(const T&i, const T&j, F funcpoint)
+{
+	cout << funcpoint(i, j) << endl;
+}
+
+class Tc
+{
+	public:
+  		Tc(){
+        	cout << "构造函数执行" << endl;
+        }
+  		Tc(const Tc&tc)
+        {
+        	cout << "拷贝构造函数执行" << endl;
+        }
+  
+  		int operator()(int v1, int v2)const
+        {
+        	return v1 * v2;
+        }
+};
+
+int func2(int a, int b)
+{
+    return a * b;
+}
+
+
+int main()
+{
+	Tc testC;
+  	testFunc(2,6,testC);
+  	testFunc(2,6,func2);
+  	testFunc(2,6,Tc());
+}
+
+/*
+构造函数执行
+
+拷贝构造函数执行
+
+12
+
+12
+
+构造函数执行
+
+12
+
+
+*/
+```
+
+（4）默认模板参数
+```c++
+// MyArray.h
+
+#include <string>
+#include <iostream>
+
+using namespace std;
+
+#ifndef __MYARRAY__
+#define __MYARRAY__
+
+template<typename T=string, int size=5>
+class MyArray
+{
+    private:
+        T arr[size];
+    
+    public:
+        void myfunc();
+};
+
+template<typename T, int size>
+void MyArray<T, size>::myfunc()
+{
+    cout << size <<endl;
+    return;
+}
+
+#endif
+```
+
+```c++
+#include <cstdio>
+#include <iostream>
+#include <string>
+#include "MyArray.h"
+
+using namespace std;
+
+class Tc
+{
+	public:
+  		Tc(){
+        	cout << "构造函数执行" << endl;
+        }
+  		Tc(const Tc&tc)
+        {
+        	cout << "拷贝构造函数执行" << endl;
+        }
+  
+  		int operator()(int v1, int v2)const
+        {
+        	return v1 * v2;
+        }
+};
+
+
+typedef int(*FunType)(int, int); // 定义一个函数指针类型
+
+int func2(int a, int b)
+{
+    return a - b;
+}
+
+// template <typename T, typename F=Tc> // 第三个参数我们默认给他一个默认参数Tc
+// void testFunc(const T&i, const T&j, F funcpoint=F()) // 如果不使用函数模板，这行代码就等价于
+// void testFunc(const int &i, const int &j, Tc funcpoint = Tc())
+// 同样我们也可以为该函数模板提供一个缺省的函数指针作为参数
+template <typename T, typename F=FunType> // 第三个参数我们默认给他一个函数指针类型作为类型参数（函数指针类型需要实现定义好）
+void testFunc(const T&i, const T&j, F funcpoint=func2) // 这里缺省的默认参数，因为是一个FuncType（自定义的函数指针类型）,所以这里需要传入一个函数名，代表函数的首地址
+{
+	cout << funcpoint(i, j) << endl;
+}
+
+
+int main()
+{
+	Tc testC;
+  	testFunc(2,6,testC);
+  	testFunc(2,6,func2);
+  	testFunc(2,6,Tc());
+  	
+  	MyArray<>abc; //完全使用模板参数的缺省值
+  	MyArray<int, 100>intTest;
+  	
+  	abc.myfunc();
+  	intTest.myfunc();
+  	
+  	testFunc(2,6); //只传递前两个参数，第三个参数使用缺省的默认TC
+  	
+}
+```
+
+```c++
+
 typename的应用场合_用在模板函数类型成员前表示是一个类型
+```c++
+// myVector.h
+#ifndef __MYVCTOR__
+#define __MYVCTOR__
+
+template<typename T> // 定义一个名字为T的模板参数，表示mtvector这个容器所保存的元素类型
+class myVector {
+    public:
+        typedef T* myiterator; // 迭代器
+    public:
+        myVector();
+        myVector& operator = (const mtVector&); // 赋值运算符重载，在类模板内部使用模板名并不需要提供模板参数（当然，想使用也可以）
+        // myVector& operator = (const mtVector<T>&)
+    public:
+        myiterator mybegin(); // 迭代器起始位置
+        myiterator myend(); // 迭代器最后一个元素的后一个位置
+    public:
+        myfunc() {}; // 成员函数
+};
+//成员函数写在类外
+template<typename T>
+void myVector<T>::myfunc() {
+
+}
+
+template<typename T>
+// typename必须写
+// ::的第二个用法，访问类型成员myiterator (typename)
+// 我们这里的迭代器mybegin返回的正好是这种类型
+// typename这里的目的就是显示的告诉编译器myiterator是一个类型
+typename myVector<T>::myiterator myVector<T>::mybegin()
+{
+
+};
+
+#endif
+```
 
 ```c++
 #include<iostream>
@@ -36,7 +234,7 @@ int main(void)
 *	template<typename T>		//名字为T的模板参数
 *	typename 可以使用class，这里的class不是类定义，表示类型参数
 *	2.使用类的类型成员，用typename来表示这是一个类型
-*	::可以表示类成员作用域
+*	::可以表示类成员作用域 比如访问类的静态成员，可以使用 类名：：静态成员名
 *	::还可以表示访问模板类的类型成员。
 *				函数返回值
 *		typename myVector<T>::myIterator   myVector<T>::myend()
