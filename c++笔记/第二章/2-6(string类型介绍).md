@@ -3,7 +3,7 @@
 （3）定义和初始化string对象；
 （4）string对象上的操作；
 
-# 一：前言int, float, char, C++标准库：string, vector.
+# 一：前言int, float, char, C++标准库：string, vector
 
 string：可变长字符串的处理。vector一种集合或者容器的概念。
 
@@ -11,12 +11,14 @@ string：可变长字符串的处理。vector一种集合或者容器的概念�
 
 C++标准库中的类型，代表一个可变长字符串；
 string这个类型，看成一个类类型（类似于struct）；
+
 ```c++
 char str[100] = "I Love China"; //C语言中用法
 
 ```
 
 # 三：定义和初始化string对象
+
 ```c++
 string s1；//默认初始化，s1 = "";""空串，表示里边没有字符；
 string s2= "I Love China!"; //把I Love China!这个字符串内容拷贝到了s2代表的一段内存中。拷贝时不包括末尾\0.
@@ -54,7 +56,7 @@ cout<<s3.size()<<endl;
 cout<<s3.length()<<endl; 
 ```
 
-(c) s[n]：返回s中的第n个字符（n是个整型值），n代表的是一个位置，位置从0开始，到.size() - 1; 
+(c) s[n]：返回s中的第n个字符（n是个整型值），n代表的是一个位置，位置从0开始，到.size() - 1;
 如果用下标n超过这个范围的内容，或者本来一个空字符串，也用s[n]去访问，都会产生不可预测的结果；
 
 ```c++

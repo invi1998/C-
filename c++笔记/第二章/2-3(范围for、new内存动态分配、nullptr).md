@@ -8,33 +8,34 @@
 int v[]
 {
 
-	12,13,14,15,16
+ 12,13,14,15,16
 
 }; // 初始化一个数组
 // for(auto x : v) // 数组V中每个元素，一次放入x中并打印X的值。把v中每个元素拷贝到x中，打印x的值
 for(auto &x : v) // 采用引用省了拷贝动作，提升了系统效率
 {
 
-	cout<<x<<endl;
+ cout<<x<<endl;
 
 }
 
 for(auto x:{11, 13, 14, 15, 16})
 {
 
-	cout<<x<<endl;
+ cout<<x<<endl;
 
 }
 
-``` 
+```
 
 # 二：动态内存分配问题
+
 C中供程序使用的存储空间有程序区，静态存储区，动态存储区。
 C++中我们把内存进一步详细分为5个区域；
 1、栈：一般函数内的局部变量都会放在这里，由编译器自动分配和释放。
 2、堆：程序员malloc/new分配，用free/delete来释放。忘记释放后，系统会回收。
 3、全局/静态存储区：放全局变量和静态变量static。程序结束时系统释放。
-4、常量存储区：“I love china”; 
+4、常量存储区：“I love china”;
 5、程序代码区
 
 堆和栈不同的用途和区别
@@ -45,54 +46,56 @@ C++中我们把内存进一步详细分为5个区域；
 malloc和free：在C语言中，用malloc和free从堆中来分配和释放内存用。malloc()和free()是函数；
 malloc(memory allocation) ：动态内存分配
 一般形式：
+
 ```c++
 void *malloc(int NumBytes)：//NumBytes：要分配的字节数。分配成功则返回指向被分配内存的指针，分配失败慢返回NULL。
 ```
 
 当这段分配的内存你不使用的时候，你应该用free()函数来将内存释放掉，供其他地方使用。
 free：
+
 ```c++
 void free(void *FirstByte)：将之前用malloc分配的内存空间还给程序（操作系统），也就是说释放了这块内存，这样这块内存就被系统回收，并在需要的时候由系统分配出去再给其他释放。
 
-``` 
+```
 
 ```c++
 int *p = NULL;
 p = (int *)malloc(sizeof(int));
-int *p - NULL; 	//C语言写法 等价于数字0
-p=(int *)malloc(sizeof(int)); 	//在堆中分配4个字节。
+int *p - NULL;  //C语言写法 等价于数字0
+p=(int *)malloc(sizeof(int));  //在堆中分配4个字节。
 if(p!=NULL)
 {
 
-	//分配成功
-	*p=5;
-	cout<<*p<<endl;
-	free(p);	//释放掉，千万不要忘记
+ //分配成功
+ *p=5;
+ cout<<*p<<endl;
+ free(p); //释放掉，千万不要忘记
 
 }
 
 char *point =NULL; 
-point =(char *)malloc(100*sizeof(char)); 	//100个位置
-if(point !=NULL)	//if(point)
+point =(char *)malloc(100*sizeof(char));  //100个位置
+if(point !=NULL) //if(point)
 {
 
-	strcpy(point,"hello world!"); // 往point里拷贝字符串
-	strcpy_s(point,100,"hello world!");	//strcat--->strcat_s(); // 链接字符串
-	cout<<point<<endl;
-	free(point);
+ strcpy(point,"hello world!"); // 往point里拷贝字符串
+ strcpy_s(point,100,"hello world!"); //strcat--->strcat_s(); // 链接字符串
+ cout<<point<<endl;
+ free(point);
 
 }
 
-int *p = (int *)malloc(sizeof(int) *100); 	//分配可以放得下100个整数的内存空间
+int *p = (int *)malloc(sizeof(int) *100);  //分配可以放得下100个整数的内存空间
 if(p!=NULL)
 {
 
-	int *q = p;
-	*q++ =1;	//==>*(q++);	-->*q = 1;	q++;
-	*q++ =5;
-	cout<<*p<<endl;	//1
-	cout<<*(p+1)<<endl;	//5
-	free(p);
+ int *q = p;
+ *q++ =1; //==>*(q++); -->*q = 1; q++;
+ *q++ =5;
+ cout<<*p<<endl; //1
+ cout<<*(p+1)<<endl; //5
+ free(p);
 
 }
 ```
@@ -105,61 +108,63 @@ new一般使用格式：
 3、指针类型名 = new 类型标识符【内存单元个数】；//注意，这里是[]
 
 ```c++
-int *myint = new int(18); 		//int *p = (int *) malloc(sizeof(int)); 
+int *myint = new int(18);   //int *p = (int *) malloc(sizeof(int)); 
 if(myint !=NULL)
 {
 
-	*myint = 8;	//*myint带包指针指向的变量
-	cout<<*myint<<endl;
-	delete myint;	//释放单个myint的空间
+ *myint = 8; //*myint带包指针指向的变量
+ cout<<*myint<<endl;
+ delete myint; //释放单个myint的空间
 
 }
-int *pa = new int[100]; 	//开辟一个大小为100的整形数组空间
+int *pa = new int[100];  //开辟一个大小为100的整形数组空间
 if(pa !=NULL)
 {
 
-	int *q = pa;
-	*q++=12;	//[0] = 12;
-	*q++=18;	//[1] = 18,执行完这行，这个q其实已经指向[2]
-	
-	cout<<*pa<<endl;	//12
-	cout<<*(pa+1)<<endl;	//18
+ int *q = pa;
+ *q++=12; //[0] = 12;
+ *q++=18; //[1] = 18,执行完这行，这个q其实已经指向[2]
+ 
+ cout<<*pa<<endl; //12
+ cout<<*(pa+1)<<endl; //18
 
-	//释放内存了
-	delete[] pa;	//释放int pa数组空间
-					//new时候我们用[]，那么delete就必须用[],[]不写数组大小
+ //释放内存了
+ delete[] pa; //释放int pa数组空间
+     //new时候我们用[]，那么delete就必须用[],[]不写数组大小
 
 }
 
-``` 
+```
 
 额外补充知识
-1、配对使用有malloc成功必然有free，有new成功必须有delete; ; 
+1、配对使用有malloc成功必然有free，有new成功必须有delete; ;
 2、free/delete，不要重复调用。
 
 malloc/free和new/delete区别
 new/delete内部还调用了构造函数等等区别
 
 # 三: nullptr C++11中引入新关键字
+
 nullptr代表的也是空指针。
+
 ```c++
-char *p = NULL; 	//NULL实际就0
+char *p = NULL;  //NULL实际就0
 char *q = nullptr; 
 int *a = nullptr; 
 
-int a=nullptr	//不可以
-int b= NULL	//可以
+int a=nullptr //不可以
+int b= NULL //可以
 
 if( p == nullptr)
 {
 
-	cout<<"NULL == nullptr"<<endl;
+ cout<<"NULL == nullptr"<<endl;
 
 }
 if(q == NULL)
 {
 
-	cout<<"q == NULL"<<endl;
+ cout<<"q == NULL"<<endl;
 
 }
 
