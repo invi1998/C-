@@ -16,3 +16,11 @@
 <https://www.aiursoft.com/?show=direct>
 
 连通分量（查并集）
+
+<!-- 知乎 -->
+<https://www.zhihu.com/question/21031559>
+
+<!-- C# -->
+<http://www.mkcode.net/html/luxian.html>
+<!-- 付费课 -->
+<http://www.sikiedu.com/classroom/7/introduction>
