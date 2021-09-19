@@ -345,3 +345,110 @@ int main(void)
 */
 
 ```
+
+
+```c++
+/******************************************************************************
+
+Welcome to GDB Online.
+GDB online is an online compiler and debugger tool for C, C++, Python, PHP, Ruby, 
+C#, VB, Perl, Swift, Prolog, Javascript, Pascal, HTML, CSS, JS
+Code, Compile, Run and Debug online from anywhere in world.
+
+*******************************************************************************/
+#include <stdio.h>
+#include <iostream>
+#include <boost/type_index.hpp>
+
+using namespace std;
+
+namespace _nmsp1
+{
+    template<typename T>
+    void myfunc(T && v)
+    {
+        
+    }
+    
+    void func()
+    {
+        // // std::forward 用法补充
+        
+        // int i = 14;
+        // myfunc(i); // i 是左值。T = int &, t = int &
+        // myfunc(188); // 188 是右值。T = int, t = int &&
+        
+        // int nx = 13; // nx 左值
+        // int &&def = std::move(nx);
+        // int &&def2 = std::forward<int>(nx); // forward这里也能成功的把左值转为右值
+        // // 所以这里forward转为什么值，取决于尖括号里传递的是什么，尖括号里就表示上文的 T 
+        
+    }
+}
+
+namespace _nmsp2
+{
+    template<typename T>
+    void myfunc(T& tmpv)
+    {
+        std::cout << "---------------begin-----------------" << std::endl;
+        using boost::typeindex::type_id_with_evr;
+        std::cout << "T = " << type_id_with_evr<T>().pretty_name() << std::endl;
+        // 显示T的类型
+        std::cout << "tmpv = " << type_id_with_evr<decltype(tmpv)>().pretty_name() << std::endl;
+        // 显示形参tmpv的类型
+        std::cout << "----------------end------------------" << std::endl;
+        
+        return;
+    }
+    
+    void func()
+    {
+        // auto常规类型推断
+        
+        int i = 18;         // int
+        const int j = i;    // const int
+        const int &k = i;   // const int &
+        myfunc(i);          // T = int;             t = int &
+        myfunc(j);          // T = const int;       t = const int &
+        myfunc(k);          // T = const int;       t = const int &
+        
+        // auto c++11 用于变量的自动类型推断，在声明变量的时候根据变量初始值的类型自动为此变量选择匹配的类型
+        // 而不需要我们显示的指定变量类型
+        
+        // 特点：
+        // 1）auto自动类型推断发生在编译期间，所以不会影响程序执行期间的性能
+        // 2）auto定义的变量必须立即初始化，这样编译器才能在编译期间推断他的实际类型
+        // 那么编译器这时候才会确定auto 的类型和整个变量的类型，然后在编译期间就可以用真正的类型替换掉auto这个类型占位符
+        // 3）auto使用灵活，可以和指针，引用，const等限定符结合使用
+        
+        // auto类型推断和函数模板推断非常类似
+        // auto推断出来代表的是一个具体类型
+        // auto实际上是一个类型，那么这里的auto实际上就相当于上面函数模板推导里的类型模板参数 T
+        // 所以auto是类型声明的一部分（类型占位符）
+        
+        // auto x = 20;    // auto = int ； x = int
+        // 形参分为3类，1）指针或者引用类型，但不是万能引用 2）万能引用类型，3）传值方式（非指针，非引用）
+        // 1）传值方式 （传值方式的auto会抛弃引用，const等限定符）
+        auto x = 20;    // auto = int ； x = int
+        const auto x2 = x; // auto = int ; x2 = const int
+        
+        // 2) 指针或者引用类型，但不是万能引用
+        const auto &x3 = x; // auto = int ; x3 = const int&
+        auto xyz = x3;  // auto = int, xyz = int // 这个属于传值方式（传值凡是引用类型和const属性都会被抛弃，对方会将其看做新副本）
+        // （注意： auto后面直接接变量名属于传值方式， auto后面接一个引用符，就叫引用）
+        return;
+    }
+}
+
+int main()
+{
+    
+    // _nmsp1::func();
+    _nmsp2::func();
+    
+    return 0;
+}
+
+
+```

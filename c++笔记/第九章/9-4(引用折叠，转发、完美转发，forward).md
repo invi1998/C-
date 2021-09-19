@@ -299,3 +299,137 @@ int main(void)
 ```
 
 
+```c++
+namespace _nmsp2
+{
+    
+    // 定义一个模板函数 ： 要把收到的参数以及这些参数相对应的类型不变（比如左值引用。右值引用，const）的转发给其他函数（转发给myfunc）
+    // 这就叫转发
+    template<typename F, typename T1, typename T2>
+    // void myfuncTmp(F f, T1 t1, T2 t2) // F就是第三方我们要调用的函数（要转发到的目标函数）
+    void myfuncTmp(F f, T1 &&t1, T2 &&t2)
+    {
+        
+        // 万能引用后（针对 myfuncTmp(myfunc, 40, j); ）
+        // T1 = int, t1 = int &&
+        // T2 = int &, t2 = int &
+        
+        // 针对 myfuncTmp(myfunc2, 30, k); 
+        // T1 = int, t1 = int &&。但是，因为函数里的形参总是左值，所以t1是左值（类型是右值引用）
+        // 所以在调用myfunc2的时候，往里面的v1(右值引用，注定其只能绑定右值)，t1绑定到右值引用，就报错了
+        // f(t1, t2);
+        // 改造为完美转发
+        f(std::forward<T1>(t1), std::forward<T2>(t2));
+    }
+    
+    // void myfunc(int v1, int v2)
+    void myfunc(int v1, int & v2)
+    {
+        ++v2; // 改变V2的值，让其自加1
+        std::cout << v1 + v2 << std::endl;
+    }
+    
+    void myfunc2(int &&v1, int & v2)
+    {
+        std::cout << v1 << std::endl;
+        std::cout << v2 << std::endl;
+    }
+    
+    void printInfo(int &i) // 类型是左值引用的形参
+    {
+        std::cout << "printInfo()的参数类型是左值引用" << std::endl;   
+    }
+    
+    void printInfo(int &&i) // 类型是右值引用的形参
+    {
+        std::cout << "printInfo()的参数类型是右值引用" << std::endl;   
+    }
+    
+    template<typename T>
+    void printTmp(T && t)
+    {
+        printInfo(t);
+        printInfo(std::forward<T>(t));
+        printInfo(std::move(t));
+    }
+    
+    void func()
+    {
+        // 转发 完美转发
+        
+        int i = 10;
+        myfunc(20, i);  // 20 + 11 = 31
+        std::cout << i << std::endl;    // 10 ==变成引用后==> 11
+        
+        int j = 70;
+        myfuncTmp(myfunc, 40, j);   // 40 + 71 = 111
+        std::cout << j << std::endl;    // 70 ==变成引用后==> 70（错误） ===变成万能引用后===> 71（正确）
+        
+        // 这里j不是71，说明我们的转发模板出了问题（当我们遇到引用的时候就不能正常工作）
+        // 想象中myfuncTmp在被调用后实例化的结果是
+        // void myfuncTmp(void (*myfunc)(int, int &), int t1, int t2)
+        // 所以，这里就导致我们函数模板里传递给目标函数的是t2，而不是我们传递的 引用j(&j),
+        // 那么我们如何通过函数模板给目标函数传递一个引用呢？（修改转发函数模板的参数，让其能够保持给定实参的左值性，当然，如果实参有const属性，我们也希望const属性能被传递进去）
+        // 通过 万能引用 实现（实参的所有信息都能传递到万能引用中，从而让编译器推导出函数模板的最终形参类型）
+        // 如果不用万能引用，只用普通的引用传值 ，则只有const属性能传递到函数模板中，而实参中的左值和右值无法传递
+        
+        int k = 100;
+        myfunc2(200, k);
+        
+        // 定义一个右值引用类型(右值引用绑定右值)
+        int &&youzhi = 90;
+        // 虽然 &&youzhi是绑定到右值的，但是 youzhi 本身他是一个左值，因为 youzhi 是在等号左边待着的
+        int &z = youzhi; // 证明 youzhi 是一个左值，因为youzhi可以绑定到左值引用
+        // &&youzhi 叫右值引用，youzhi是一个左值（有地址）
+        // youzhi 是一个左值，但是他的类型是右值引用（&&）
+        // 也就是说，左值引用 还是 右值引用 这种概念说的是他的类型，而不是它本身
+        // void fc(int &&v){}  // 注意：函数中的形参总是左值，即使他的类型是右值引用
+        // myfunc2(youzhi, k); // cannot bind rvalue reference of type ‘int&&’ to lvalue of type ‘int’
+        // 无法将参数1从int转为int &&
+        // myfunc2(std::move(youzhi), k); // 可以使用move左值转右值
+        
+        // 同样的，通过转发模板，也会报错无法将左值转右值
+        // myfuncTmp(myfunc2, youzhi, k); // 报错
+        myfuncTmp(myfunc2, 30, k); // 报错
+        
+        
+        // 完美转发  让我们可以写能够接收任意类型的实参的函数模板，并将其转发到目标函数，目标函数会接收到与转发函数完全相同的参数
+        // std::forward
+        // c++11 中专门为转发而存在的一个新函数，要么返回左值，要么返回右值
+        // f(std::forward<T1>(t1), std::forward<T2>(t2));
+        // 发挥作用的条件
+        // 调用模板函数，模板函数参数是万能引用，模板函数负责转发
+        // std::forward的能力就是按照实参本来的类型进行转发
+        // 对std::forward的理解：
+        // 1）实参如果是一个左值，forward是按照形参原来的类型进行处理，所以std::forward之后还是左值
+        // 2）实参如果原来是一个右值，到了形参中变成了左值，forward是按照形参原来的类型进行处理，所以std::forward之后变成右值
+        // 所以，这里看来std::forward有强制将左值转为右值的能力，forword只对原来是个右值的情况有用
+        // forward的能力就是保持原始实参的类型
+        
+        printTmp(100);
+        // 100 右值， T = int；  t = int &&  但是t本身是左值
+        // printInfo()的参数类型是左值引用
+        // printInfo()的参数类型是右值引用
+        // printInfo()的参数类型是右值引用
+        printTmp(k);
+        // k 左值， T = int &；  t = int &  但是t本身是左值
+        // printInfo()的参数类型是左值引用
+        // printInfo()的参数类型是左值引用
+        // printInfo()的参数类型是右值引用
+        
+        // 实参是左值还是右值，这个信息会被保存到转发函数模板里的万能引用里面的模板类型参数里去的
+    
+        // std::move()和std::forward的区别
+        // forward 就是强制把一个左值转为右值，但是如果你实参就是左值，那forward啥也不干（有条件的类型转换）
+        // move() 无条件的强制类型转换（强制将左值转右值）
+        
+        // 万能引用 并不是一种新的引用类型，他只是一种写代码的表象
+        // 但是万能引用这个概念的存在是很有意义的
+        
+    }
+}
+
+
+```
+
+
