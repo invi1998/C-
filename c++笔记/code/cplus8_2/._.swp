@@ -1,0 +1,8 @@
+def fact(l,n=10):
+    for i in range(len(l)):
+        l[i]=n
+    return l
+n=5
+l=[1,2,3,4,5]
+s=fact(l)
+print(s)
