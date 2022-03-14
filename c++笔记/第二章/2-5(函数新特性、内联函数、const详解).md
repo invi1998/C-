@@ -202,3 +202,26 @@ void fs2(const int i)
 
 }
 ```
+
+1：防止被修改
+2：函数的适用性增强，可以接收const指针类型的实参
+
+```c++
+void foo1(const char* p)
+{
+
+}
+void foo2(char* p)
+{
+
+}
+
+int main(void)
+{
+  foo1("abcd"); //可以的。
+  foo2("abcd");//不可以的。
+  return 0;
+}
+
+```
+
