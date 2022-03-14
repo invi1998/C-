@@ -128,7 +128,7 @@ unique_lock比lock_guard灵活很多；效率上差一点，内存占用多一�
 # 二：unique_lock的第二个参数
 
 lock_guard可以带第二个参数：
-std::lock_guardstd::mutex sbguard1(my_mutex1,std::adopt_lock); //adopt_lock标记作用；
+`std::lock_guard<std::mutex> sbguard1(my_mutex1,std::adopt_lock);` //adopt_lock标记作用；
 2.1、std::adopt_lock：表示这个互斥量已经被lock了（你必须要把互斥量提前lock了，否则会报异常）
 std::adopt_lock标记的效果就是“假设调用方线程已经拥有了互斥的所有权（已经lock()成功了）；通知lock_guard不需要在构造函数中lock这个互斥量了;
 unique_lock也可以带std::adopt_lock标记，含义相同，就是不希望在unique_lock()的构造函数中lock这个mutex。
@@ -158,7 +158,7 @@ b、锁住的代码多，粒度叫粗，那执行效率就低；
 
 # 四：unique_lock所有权的传递，mutex
 
-std::unique_lockstd::mutex sbguard1(my_mutex1)：所有权概念
+`std::unique_lock<std::mutex> sbguard1(my_mutex1)：`所有权概念
 sbguard1拥有my_mutex1的所有权
 sbguard1可以把自己对mutex(my_mutex1)的所有权转移给其他的unique_lock对象；
 所以，unique_lock对象这个mutex的所有权是属于可以转移的，但是不能复制。

@@ -1,4 +1,4 @@
-（1）typename的使用场合
+****（1）typename的使用场合
 
 （2）函数指针做其他函数的参数
 
@@ -97,6 +97,8 @@ void MyArray<T, size>::myfunc()
 #endif
 ```
 
+typename的应用场合_用在模板函数类型成员前表示是一个类型
+
 ```c++
 #include <cstdio>
 #include <iostream>
@@ -160,8 +162,6 @@ int main()
 ```
 
 ```c++
-
-typename的应用场合_用在模板函数类型成员前表示是一个类型
 ```c++
 // myVector.h
 #ifndef __MYVCTOR__
