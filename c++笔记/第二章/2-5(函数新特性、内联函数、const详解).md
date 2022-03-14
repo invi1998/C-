@@ -110,7 +110,7 @@ cout<<abc.num<<endl;  //1010
 
 7、C++中，函数允许同名，但是形参列表的参数类型或者数量应该有明显的区别。
 
-# 四：const char *、char const*、char * const 三者的区别
+# 四：`const char *、char const*、char * const` 三者的区别
 
 ```c++
 const int abc = 12; 
