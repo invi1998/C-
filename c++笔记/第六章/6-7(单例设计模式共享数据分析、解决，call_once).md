@@ -18,7 +18,7 @@
 单例类；
 
 ```c++
-std::mutex_resource_mutex;
+std::mutex resource_mutex;
 std::once_flag g_flag;	//这是个系统定义的标记
 class MyCAS	//这是一个单例类
 {
