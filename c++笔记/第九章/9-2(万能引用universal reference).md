@@ -111,7 +111,7 @@ int main(void)
  *		  {}//右值引用，模板类型T，必须和&&挨着，是一个右值引用
  *
  *(5)万能引用资格的剥夺和辨认
- *	1.剥夺：const会剥夺成为右值引用的资格，使其成为右值引用  void myFunction03(const T1 &&tem)
+ *	1.剥夺：const会剥夺成为万能引用的资格，使其成为右值引用  void myFunction03(const T1 &&tem)
  *	2.辨认：类的成员函数辨认
  */
 
