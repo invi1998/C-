@@ -189,6 +189,8 @@ dynamic_cast操作符，将基类类型的指针或引用安全地转换为其�
 我们知道C++的多态性（运行时）是由虚函数实现的，对于多态性的对象，无法在程序编译阶段确定对象的类型。当类中含有虚函数时，其基类的指针就可以指向任何派生类的对象，这时就有可能不知道基类指针到底指向的是哪个对象的情况，类型的确定要在运行时利用运行时类型标识做出。为了获得一个对象的类型可以使用typeid函数，该函数反回一个对type_info类对象的引用，要使用typeid必须使用头文件<typeinfo>，因为typeid是一个返回类型为typ_info的引用的函数。因为type_info类的复制构造函数和赋值运算符都是私有的，所以不允许用户自已创建type_info的类。唯一要使用type_info类的方法就是使用typeid函数。
 type_info 类的一些方法：
 1、 .name  返回一个c风格的字符串
+
+```c++
 Human *phuman = new Man;
 const type_info &tp = typeid(*phuman);
 cout << tp.name() << endl;
@@ -207,6 +209,9 @@ if (tp2 != tp3) {
     cout << "tp2和tp3类型不相同" << endl;
 
 }
+```
+
+
 
 ## typeid函数
 
