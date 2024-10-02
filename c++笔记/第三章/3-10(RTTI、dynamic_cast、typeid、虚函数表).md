@@ -1,3 +1,175 @@
+
+
+C++ 的 RTTI（Run-Time Type Information，运行时类型信息）是一种机制，允许程序在运行时查询对象的类型信息。RTTI 主要通过以下几种方式实现：
+
+### 1. **`typeid` 运算符**
+
+`typeid` 运算符用于获取对象或类型的类型信息。它返回一个 `type_info` 对象，该对象包含了类型的各种信息，如类型名称等。
+
+#### 示例
+
+```cpp
+#include <iostream>
+#include <typeinfo>
+
+class Base {};
+class Derived : public Base {};
+
+int main() {
+    Base base;
+    Derived derived;
+
+    std::cout << "Type of base: " << typeid(base).name() << std::endl;
+    std::cout << "Type of derived: " << typeid(derived).name() << std::endl;
+
+    Base* ptr = &derived;
+    std::cout << "Type of ptr: " << typeid(ptr).name() << std::endl;
+    std::cout << "Type of *ptr: " << typeid(*ptr).name() << std::endl;
+
+    return 0;
+}
+```
+
+### 2. **`dynamic_cast`**
+
+`dynamic_cast` 用于在类层次结构中进行类型转换，特别是多态对象。它在运行时进行类型检查，如果转换失败，返回 `nullptr`（对于指针）或抛出异常（对于引用）。
+
+#### 示例
+
+```cpp
+#include <iostream>
+
+class Base {
+public:
+    virtual ~Base() {}
+    virtual void print() const { std::cout << "Base" << std::endl; }
+};
+
+class Derived : public Base {
+public:
+    void print() const override { std::cout << "Derived" << std::endl; }
+};
+
+int main() {
+    Base* basePtr = new Base();
+    Derived* derivedPtr = dynamic_cast<Derived*>(basePtr);
+
+    if (derivedPtr) {
+        derivedPtr->print();  // 不会执行，因为 basePtr 不是 Derived 类型
+    } else {
+        std::cout << "Conversion failed" << std::endl;  // 输出 "Conversion failed"
+    }
+
+    Base* basePtr2 = new Derived();
+    Derived* derivedPtr2 = dynamic_cast<Derived*>(basePtr2);
+    derivedPtr2->print();  // 输出 "Derived"
+
+    delete basePtr;
+    delete basePtr2;
+    return 0;
+}
+```
+
+### 3. **`type_info` 类**
+
+`type_info` 类提供了类型信息的接口，可以通过 `typeid` 运算符获取 `type_info` 对象。
+
+#### 主要成员函数
+
+- `const char* name() const;`：返回类型的名称。
+- `bool before(const type_info& rhs) const;`：比较两个类型的顺序。
+- `bool operator==(const type_info& rhs) const;`：检查两个类型是否相同。
+- `bool operator!=(const type_info& rhs) const;`：检查两个类型是否不同。
+
+#### 示例
+
+```cpp
+#include <iostream>
+#include <typeinfo>
+
+class Base {};
+class Derived : public Base {};
+
+int main() {
+    Base base;
+    Derived derived;
+
+    const std::type_info& ti1 = typeid(base);
+    const std::type_info& ti2 = typeid(derived);
+
+    std::cout << "Type of base: " << ti1.name() << std::endl;
+    std::cout << "Type of derived: " << ti2.name() << std::endl;
+
+    if (ti1 == ti2) {
+        std::cout << "Types are the same" << std::endl;
+    } else {
+        std::cout << "Types are different" << std::endl;  // 输出 "Types are different"
+    }
+
+    return 0;
+}
+```
+
+### 4. **`type_index` 类**
+
+`type_index` 类是 C++11 引入的，它提供了一个可以用于容器的 `type_info` 包装器。`type_index` 对象可以比较、排序和用作容器的键。
+
+#### 主要成员函数
+
+- `const std::type_info& type() const;`：返回 `type_info` 对象。
+- `bool operator==(const type_index& rhs) const;`：检查两个类型是否相同。
+- `bool operator<(const type_index& rhs) const;`：比较两个类型的顺序。
+
+#### 示例
+
+```cpp
+#include <iostream>
+#include <typeindex>
+#include <map>
+
+class Base {};
+class Derived : public Base {};
+
+int main() {
+    Base base;
+    Derived derived;
+
+    std::type_index ti1(typeid(base));
+    std::type_index ti2(typeid(derived));
+
+    std::cout << "Type of base: " << ti1.name() << std::endl;
+    std::cout << "Type of derived: " << ti2.name() << std::endl;
+
+    if (ti1 == ti2) {
+        std::cout << "Types are the same" << std::endl;
+    } else {
+        std::cout << "Types are different" << std::endl;  // 输出 "Types are different"
+    }
+
+    std::map<std::type_index, std::string> typeMap;
+    typeMap[ti1] = "Base";
+    typeMap[ti2] = "Derived";
+
+    for (const auto& pair : typeMap) {
+        std::cout << "Type: " << pair.first.name() << ", Value: " << pair.second << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 5. **性能考虑**
+
+RTTI 机制在编译时和运行时都会引入一些开销。特别是 `dynamic_cast` 在运行时进行类型检查，可能会比其他类型转换操作符（如 `static_cast`）慢。因此，在性能敏感的应用中，应谨慎使用 RTTI。
+
+### 总结
+
+C++ 的 RTTI 提供了在运行时查询对象类型信息的能力，主要通过 `typeid` 运算符、`dynamic_cast`、`type_info` 类和 `type_index` 类实现。这些机制在多态编程、类型安全的类型转换和类型信息的管理中非常有用。理解 RTTI 的工作原理和使用方法，可以帮助编写更安全和灵活的代码。
+
+---
+
+
+
 # RTTI概念
 
 RTTI(Run Time Type Identification)即通过运行时类型识别，程序能够使用基类的指针或引用来检查着这些指针或引用所指的对象的实际派生类型。
@@ -58,7 +230,7 @@ C++中如果含所有虚函数，编译器就会对该类产生一个虚函数�
  虚函数表项里面，第一个表项很特殊，它指向的不是虚函数的入口地址，它指向的实际上是这个类的type_info()对象。
 
   每个类对象隐藏一个指向类的虚函数表的指针。
-  
+
   虚函数表第一列是type_info()类型，用于说明实际的类对象类型。调用子类或者父类的函数（虚函数）
 
 # RTTI和dynamic_cast类型转换
