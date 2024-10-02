@@ -28,7 +28,7 @@ Time& Time::add_hour(Tiem *const this, int hour)
 编译器就会多加了这个Time* const this这个参数，然后在调用的时候，编译器实际上是把你所调用的对象的地址作为第一个参数，进行调用。即:
 mytime.add_hour(&mytime, 13);
 这也就解释了为什么成员函数里可以直接调用成员变量，因为在编译器看来，成员函数里的成员变量都是通过this来进行调用的，即你也可以显示的写为
-this->Hour  (this->成员白能量)
+this->Hour  (this->成员变量)
 
 * <font color="#03A9F4">1. 隐藏的this指针只能在成员函数中，全局函数和静态函数（static）中不存在this指针</font>
 * <font color="#03A9F4">2. 在普通成员函数中，this是一个指向非const对象的const指针(比如说：类型为Time, 那么this就是 Time * const this )。this只能指向当前对象，指向不能改变。</font>
