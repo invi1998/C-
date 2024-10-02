@@ -1,3 +1,107 @@
+在C++中，左值（lvalue）和右值（rvalue）是表达式分类的重要概念，它们在语言的许多方面都有重要的作用，包括函数参数传递、返回值处理、移动语义等。
+
+### 左值 (lvalue)
+
+- **定义**：左值是指具有持久存储的值，可以取地址，并且可以在赋值操作的左侧出现。
+- **特点**：
+  - 可以取地址（使用 `&` 运算符）。
+  - 通常表示一个对象，这个对象有确定的存储位置。
+  - 可以作为赋值操作的目标。
+
+### 右值 (rvalue)
+
+- **定义**：右值是指临时的、即将销毁的值，不能取地址，通常出现在赋值操作的右侧。
+- **特点**：
+  - 不能取地址。
+  - 表示一个临时对象或字面量。
+  - 通常用于初始化或赋值操作的源。
+
+### 左值引用和右值引用
+
+- **左值引用**：用 `&` 表示，只能绑定到左值。
+- **右值引用**：用 `&&` 表示，只能绑定到右值。
+
+### 示例
+
+```cpp
+#include <iostream>
+
+int main() {
+    int x = 10;  // x 是左值
+    int y = 20;  // y 是左值
+
+    // 左值引用
+    int &ref_x = x;  // ref_x 是 x 的左值引用
+    ref_x = y;       // 等价于 x = y
+
+    // 右值引用
+    int &&rref_y = 30;  // rref_y 是 30 的右值引用
+    rref_y = 40;        // 修改 rref_y，即修改临时对象 30
+
+    std::cout << "x: " << x << std::endl;  // 输出 20
+    std::cout << "y: " << y << std::endl;  // 输出 20
+    std::cout << "rref_y: " << rref_y << std::endl;  // 输出 40
+
+    return 0;
+}
+```
+
+### 左值应用和右值应用
+
+- **左值应用**：通常涉及对持久对象的操作，如赋值、取地址等。
+- **右值应用**：通常涉及对临时对象的操作，如移动语义、资源转移等。
+
+### 移动语义
+
+右值引用的一个重要应用是实现移动语义，这可以提高性能，特别是在处理大型对象（如 `std::vector`）时。
+
+```cpp
+#include <iostream>
+#include <vector>
+
+class MyClass {
+public:
+    std::vector<int> data;
+
+    // 拷贝构造函数
+    MyClass(const MyClass &other) : data(other.data) {
+        std::cout << "Copy constructor called" << std::endl;
+    }
+
+    // 移动构造函数
+    MyClass(MyClass &&other) noexcept : data(std::move(other.data)) {
+        std::cout << "Move constructor called" << std::endl;
+    }
+};
+
+MyClass createObject() {
+    MyClass obj;
+    obj.data.push_back(1);
+    obj.data.push_back(2);
+    return obj;  // 返回临时对象，触发移动构造函数
+}
+
+int main() {
+    MyClass obj1 = createObject();
+    return 0;
+}
+```
+
+在这个例子中，`createObject` 函数返回一个临时对象，这个临时对象会被移动到 `obj1` 中，而不是拷贝。这通过移动构造函数实现，提高了效率。
+
+### 总结
+
+- **左值**：持久对象，可以取地址，可以作为赋值目标。
+- **右值**：临时对象，不能取地址，通常用于初始化或赋值源。
+- **左值引用**：绑定到左值。
+- **右值引用**：绑定到右值，用于实现移动语义。
+
+---
+
+
+
+
+
 左值、右值，左值引用、右值引用、move
 
 （1）左值和右值
