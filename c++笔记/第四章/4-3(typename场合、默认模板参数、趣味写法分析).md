@@ -663,6 +663,171 @@ C++标准库提供了一些工具来处理可调用对象，例如 `std::functio
 
 
 
+invoke
+
+`std::invoke` 是 C++17 引入的一个非常有用的工具，它提供了一种通用的方式来调用可调用对象。虽然在许多情况下，我们可以直接调用函数，但 `std::invoke` 在某些特定场景下提供了更大的灵活性和便利性。以下是 `std::invoke` 的一些典型使用场景以及为什么在这些场景中使用 `std::invoke` 而不是直接调用函数。
+
+### 1. 通用性
+
+#### **调用多种类型的可调用对象**
+
+`std::invoke` 可以处理多种类型的可调用对象，包括函数指针、成员函数指针、成员变量指针、函数对象（functor）和 lambda 表达式。这使得它在编写泛型代码时非常有用。
+
+#### 示例
+
+```cpp
+#include <iostream>
+#include <functional>
+
+class MyClass {
+public:
+    void memberFunction(int x) {
+        std::cout << "Member function called with " << x << std::endl;
+    }
+
+    int memberVariable = 10;
+};
+
+void freeFunction(int x) {
+    std::cout << "Free function called with " << x << std::endl;
+}
+
+int main() {
+    MyClass obj;
+    int x = 20;
+
+    // 调用成员函数
+    std::invoke(&MyClass::memberFunction, obj, x);
+
+    // 调用自由函数
+    std::invoke(freeFunction, x);
+
+    // 调用成员变量
+    int value = std::invoke(&MyClass::memberVariable, obj);
+    std::cout << "Member variable value: " << value << std::endl;
+
+    // 调用 lambda 表达式
+    auto lambda = [](int a, int b) { return a + b; };
+    int result = std::invoke(lambda, x, x);
+    std::cout << "Lambda result: " << result << std::endl;
+
+    return 0;
+}
+```
+
+### 2. 间接调用
+
+#### **通过变量或参数调用**
+
+在某些情况下，你需要根据运行时信息来决定调用哪个函数。`std::invoke` 可以帮助你在这种情况下编写更简洁的代码。
+
+#### 示例
+
+```cpp
+#include <iostream>
+#include <functional>
+
+void function1(int x) {
+    std::cout << "Function 1 called with " << x << std::endl;
+}
+
+void function2(int x) {
+    std::cout << "Function 2 called with " << x << std::endl;
+}
+
+int main() {
+    int x = 10;
+    bool useFunction1 = true;
+
+    auto func = useFunction1 ? function1 : function2;
+    std::invoke(func, x);
+
+    return 0;
+}
+```
+
+### 3. 通用算法
+
+#### **在标准库算法中使用**
+
+许多标准库算法（如 `std::for_each`、`std::transform` 等）需要一个可调用对象作为参数。`std::invoke` 可以在这种情况下提供更大的灵活性。
+
+#### 示例
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <functional>
+
+class MyClass {
+public:
+    void process(int x) {
+        std::cout << "Processing " << x << std::endl;
+    }
+};
+
+int main() {
+    std::vector<int> numbers = {1, 2, 3, 4, 5};
+    MyClass obj;
+
+    // 使用 std::invoke 作为可调用对象
+    std::for_each(numbers.begin(), numbers.end(), std::bind(std::invoke, &MyClass::process, &obj, std::placeholders::_1));
+
+    return 0;
+}
+```
+
+### 4. 解决二义性
+
+#### **处理成员函数指针的二义性**
+
+在某些情况下，直接调用成员函数指针可能会导致二义性。`std::invoke` 可以帮助解决这种二义性。
+
+#### 示例
+
+```cpp
+#include <iostream>
+#include <functional>
+
+class Base {
+public:
+    void func(int x) {
+        std::cout << "Base::func called with " << x << std::endl;
+    }
+};
+
+class Derived : public Base {
+public:
+    void func(int x) {
+        std::cout << "Derived::func called with " << x << std::endl;
+    }
+};
+
+int main() {
+    Derived obj;
+    int x = 10;
+
+    // 使用 std::invoke 调用基类的成员函数
+    std::invoke(static_cast<void (Base::*)(int)>(&Derived::func), obj, x);
+
+    return 0;
+}
+```
+
+### 总结
+
+- **通用性**：`std::invoke` 可以处理多种类型的可调用对象，适用于泛型编程。
+- **间接调用**：在需要根据运行时信息调用不同函数的场景中，`std::invoke` 提供了更大的灵活性。
+- **通用算法**：在标准库算法中，`std::invoke` 可以作为可调用对象的通用接口。
+- **解决二义性**：在处理成员函数指针的二义性时，`std::invoke` 可以提供清晰的解决方案。
+
+通过使用 `std::invoke`，你可以编写更加灵活、通用和健壮的代码，特别是在需要处理多种类型可调用对象的场景中。
+
+---
+
+
+
 默认模板参数
 
 ```c++
