@@ -502,6 +502,167 @@ int main(void)
 */
 ```
 
+在C++中，可调用对象（Callable Object）是指可以像函数一样调用的对象。可调用对象可以是函数指针、函数对象（functor）、lambda表达式或绑定表达式（如 `std::bind` 的结果）。C++标准库提供了多种工具来处理和操作可调用对象，使其在函数式编程和泛型编程中非常有用。
+
+### 可调用对象的类型
+
+1. **函数指针**：
+   - 指向函数的指针，可以直接调用。
+   - 示例：
+     ```cpp
+     void foo(int x) {
+         std::cout << "foo called with " << x << std::endl;
+     }
+     
+     int main() {
+         void (*func_ptr)(int) = foo;
+         func_ptr(10);  // 调用 foo
+         return 0;
+     }
+     ```
+
+2. **函数对象（Functor）**：
+   - 重载了 `operator()` 的类对象。
+   - 示例：
+     ```cpp
+     class Adder {
+     public:
+         int operator()(int a, int b) const {
+             return a + b;
+         }
+     };
+     
+     int main() {
+         Adder adder;
+         int result = adder(10, 20);  // 调用 adder
+         std::cout << "Result: " << result << std::endl;  // 输出 30
+         return 0;
+     }
+     ```
+
+3. **Lambda表达式**：
+   - 匿名函数，可以捕获外部变量。
+   - 示例：
+     ```cpp
+     int main() {
+         auto lambda = [](int a, int b) {
+             return a + b;
+         };
+         int result = lambda(10, 20);  // 调用 lambda
+         std::cout << "Result: " << result << std::endl;  // 输出 30
+         return 0;
+     }
+     ```
+
+4. **绑定表达式**：
+   - 使用 `std::bind` 绑定函数或函数对象。
+   - 示例：
+     ```cpp
+     #include <functional>
+     #include <iostream>
+     
+     void foo(int x, int y) {
+         std::cout << "foo called with " << x << " and " << y << std::endl;
+     }
+     
+     int main() {
+         auto bound_func = std::bind(foo, 10, std::placeholders::_1);
+         bound_func(20);  // 调用 foo(10, 20)
+         return 0;
+     }
+     ```
+
+### 标准库中的可调用对象
+
+C++标准库提供了一些工具来处理可调用对象，例如 `std::function` 和 `std::invoke`。
+
+1. **`std::function`**：
+   - 一个通用的多态函数包装器，可以存储任何可调用对象。
+   - 示例：
+     ```cpp
+     #include <functional>
+     #include <iostream>
+     
+     void foo(int x) {
+         std::cout << "foo called with " << x << std::endl;
+     }
+     
+     class Adder {
+     public:
+         int operator()(int a, int b) const {
+             return a + b;
+         }
+     };
+     
+     int main() {
+         std::function<void(int)> func1 = foo;
+         func1(10);  // 调用 foo
+     
+         Adder adder;
+         std::function<int(int, int)> func2 = adder;
+         int result = func2(10, 20);  // 调用 adder
+         std::cout << "Result: " << result << std::endl;  // 输出 30
+     
+         auto lambda = [](int a, int b) {
+             return a + b;
+         };
+         std::function<int(int, int)> func3 = lambda;
+         result = func3(10, 20);  // 调用 lambda
+         std::cout << "Result: " << result << std::endl;  // 输出 30
+     
+         return 0;
+     }
+     ```
+
+2. **`std::invoke`**：
+   - 用于调用可调用对象，可以处理函数指针、成员函数指针、成员变量指针等。
+   - 示例：
+     ```cpp
+     #include <functional>
+     #include <iostream>
+     
+     void foo(int x) {
+         std::cout << "foo called with " << x << std::endl;
+     }
+     
+     class MyClass {
+     public:
+         void bar(int x) {
+             std::cout << "bar called with " << x << std::endl;
+         }
+     };
+     
+     int main() {
+         std::invoke(foo, 10);  // 调用 foo
+     
+         MyClass obj;
+         std::invoke(&MyClass::bar, obj, 20);  // 调用 obj.bar
+     
+         auto lambda = [](int a, int b) {
+             return a + b;
+         };
+         int result = std::invoke(lambda, 10, 20);  // 调用 lambda
+         std::cout << "Result: " << result << std::endl;  // 输出 30
+     
+         return 0;
+     }
+     ```
+
+### 总结
+
+- **函数指针**：指向函数的指针，可以直接调用。
+- **函数对象（Functor）**：重载了 `operator()` 的类对象。
+- **Lambda表达式**：匿名函数，可以捕获外部变量。
+- **绑定表达式**：使用 `std::bind` 绑定函数或函数对象。
+- **`std::function`**：通用的多态函数包装器，可以存储任何可调用对象。
+- **`std::invoke`**：用于调用可调用对象，可以处理多种类型的调用。
+
+通过使用这些可调用对象和相关的标准库工具，可以编写更加灵活和强大的C++代码，特别是在需要函数式编程和泛型编程的场景中。
+
+---
+
+
+
 默认模板参数
 
 ```c++
