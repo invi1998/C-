@@ -193,6 +193,211 @@ int main(void)
 */
 ```
 
+
+
+在C++中，`operator new` 和 `operator delete` 是用于动态内存管理的运算符。它们分别用于分配和释放内存。与 `new` 和 `delete` 关键字不同，`operator new` 和 `operator delete` 是可以被重载的，这使得开发者可以在特定情况下自定义内存管理的行为。
+
+### 1. `operator new`
+
+`operator new` 是一个全局运算符，用于分配内存。默认情况下，`operator new` 分配内存并返回指向该内存的指针。如果分配失败，`operator new` 会抛出 `std::bad_alloc` 异常。
+
+#### 基本用法
+
+```cpp
+#include <iostream>
+#include <new>  // 包含 std::bad_alloc
+
+int main() {
+    try {
+        int* ptr = static_cast<int*>(operator new(sizeof(int)));
+        *ptr = 10;
+        std::cout << "*ptr: " << *ptr << std::endl;
+        operator delete(ptr);
+    } catch (const std::bad_alloc& e) {
+        std::cerr << "Memory allocation failed: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+#### 重载 `operator new`
+
+可以为特定类重载 `operator new`，以实现自定义的内存分配策略。
+
+```cpp
+#include <iostream>
+#include <new>  // 包含 std::bad_alloc
+
+class MyClass {
+public:
+    void* operator new(size_t size) {
+        std::cout << "Custom operator new called, allocating " << size << " bytes" << std::endl;
+        void* ptr = ::operator new(size);  // 调用全局 operator new
+        if (ptr == nullptr) {
+            throw std::bad_alloc();
+        }
+        return ptr;
+    }
+
+    void operator delete(void* ptr) noexcept {
+        std::cout << "Custom operator delete called" << std::endl;
+        ::operator delete(ptr);  // 调用全局 operator delete
+    }
+};
+
+int main() {
+    try {
+        MyClass* obj = new MyClass();
+        delete obj;
+    } catch (const std::bad_alloc& e) {
+        std::cerr << "Memory allocation failed: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 2. `operator delete`
+
+`operator delete` 是一个全局运算符，用于释放由 `operator new` 分配的内存。默认情况下，`operator delete` 接受一个指针并释放该指针指向的内存。
+
+#### 基本用法
+
+```cpp
+#include <iostream>
+#include <new>  // 包含 std::bad_alloc
+
+int main() {
+    try {
+        int* ptr = static_cast<int*>(operator new(sizeof(int)));
+        *ptr = 10;
+        std::cout << "*ptr: " << *ptr << std::endl;
+        operator delete(ptr);
+    } catch (const std::bad_alloc& e) {
+        std::cerr << "Memory allocation failed: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+#### 重载 `operator delete`
+
+可以为特定类重载 `operator delete`，以实现自定义的内存释放策略。
+
+```cpp
+#include <iostream>
+#include <new>  // 包含 std::bad_alloc
+
+class MyClass {
+public:
+    void* operator new(size_t size) {
+        std::cout << "Custom operator new called, allocating " << size << " bytes" << std::endl;
+        void* ptr = ::operator new(size);  // 调用全局 operator new
+        if (ptr == nullptr) {
+            throw std::bad_alloc();
+        }
+        return ptr;
+    }
+
+    void operator delete(void* ptr) noexcept {
+        std::cout << "Custom operator delete called" << std::endl;
+        ::operator delete(ptr);  // 调用全局 operator delete
+    }
+};
+
+int main() {
+    try {
+        MyClass* obj = new MyClass();
+        delete obj;
+    } catch (const std::bad_alloc& e) {
+        std::cerr << "Memory allocation failed: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 3. 数组形式的 `operator new[]` 和 `operator delete[]`
+
+除了单个对象的 `operator new` 和 `operator delete`，C++ 还提供了数组形式的 `operator new[]` 和 `operator delete[]`，用于分配和释放数组的内存。
+
+#### 基本用法
+
+```cpp
+#include <iostream>
+#include <new>  // 包含 std::bad_alloc
+
+int main() {
+    try {
+        int* arr = static_cast<int*>(operator new[](10 * sizeof(int)));
+        for (int i = 0; i < 10; ++i) {
+            arr[i] = i * 10;
+        }
+        for (int i = 0; i < 10; ++i) {
+            std::cout << arr[i] << " ";
+        }
+        std::cout << std::endl;
+        operator delete[](arr);
+    } catch (const std::bad_alloc& e) {
+        std::cerr << "Memory allocation failed: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+#### 重载 `operator new[]` 和 `operator delete[]`
+
+可以为特定类重载 `operator new[]` 和 `operator delete[]`，以实现自定义的数组内存管理策略。
+
+```cpp
+#include <iostream>
+#include <new>  // 包含 std::bad_alloc
+
+class MyClass {
+public:
+    void* operator new[](size_t size) {
+        std::cout << "Custom operator new[] called, allocating " << size << " bytes" << std::endl;
+        void* ptr = ::operator new[](size);  // 调用全局 operator new[]
+        if (ptr == nullptr) {
+            throw std::bad_alloc();
+        }
+        return ptr;
+    }
+
+    void operator delete[](void* ptr) noexcept {
+        std::cout << "Custom operator delete[] called" << std::endl;
+        ::operator delete[](ptr);  // 调用全局 operator delete[]
+    }
+};
+
+int main() {
+    try {
+        MyClass* arr = new MyClass[10];
+        delete[] arr;
+    } catch (const std::bad_alloc& e) {
+        std::cerr << "Memory allocation failed: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 总结
+
+- **`operator new`**：用于分配内存，默认情况下会抛出 `std::bad_alloc` 异常。
+- **`operator delete`**：用于释放内存，默认情况下不会抛出异常。
+- **重载 `operator new` 和 `operator delete`**：可以在特定类中重载这些运算符，以实现自定义的内存管理策略。
+- **数组形式的 `operator new[]` 和 `operator delete[]`**：用于分配和释放数组的内存，也可以在特定类中重载。
+
+通过重载这些运算符，可以实现更高效的内存管理和特定的内存分配策略，满足特定应用的需求。
+
+---
+
+
+
 智能指针概述和shared_ptr基础
 
 ```c++
@@ -299,3 +504,141 @@ int main(void)
 *
 */
 ```
+
+
+
+
+
+在C++中，智能指针是一种用于管理动态分配内存的工具，它们自动管理内存的生命周期，避免了手动管理内存带来的风险，如内存泄漏、双重删除等问题。C++标准库提供了几种常用的智能指针，包括 `std::unique_ptr`、`std::shared_ptr` 和 `std::weak_ptr`。
+
+### 1. `std::unique_ptr`
+
+`std::unique_ptr` 是一种独占所有权的智能指针。它确保在同一时间只有一个 `std::unique_ptr` 指向某个对象。当 `std::unique_ptr` 被销毁时，它所管理的对象也会被自动删除。
+
+#### 基本用法
+
+```cpp
+#include <iostream>
+#include <memory>
+
+int main() {
+    // 创建一个 unique_ptr
+    std::unique_ptr<int> ptr(new int(10));
+
+    // 访问指针所指向的对象
+    std::cout << *ptr << std::endl;  // 输出 10
+
+    // 释放内存
+    ptr.reset();  // 也可以让 unique_ptr 自动管理内存
+
+    return 0;
+}
+```
+
+#### 转移所有权
+
+`std::unique_ptr` 不支持复制，但支持移动语义，可以通过 `std::move` 转移所有权。
+
+```cpp
+#include <iostream>
+#include <memory>
+
+int main() {
+    std::unique_ptr<int> ptr1(new int(10));
+    std::unique_ptr<int> ptr2 = std::move(ptr1);  // 转移所有权
+
+    if (ptr1 == nullptr) {
+        std::cout << "ptr1 is null" << std::endl;  // 输出 "ptr1 is null"
+    }
+
+    std::cout << *ptr2 << std::endl;  // 输出 10
+
+    return 0;
+}
+```
+
+### 2. `std::shared_ptr`
+
+`std::shared_ptr` 是一种共享所有权的智能指针。多个 `std::shared_ptr` 可以同时指向同一个对象，当最后一个 `std::shared_ptr` 被销毁时，对象才会被删除。
+
+#### 基本用法
+
+```cpp
+#include <iostream>
+#include <memory>
+
+int main() {
+    // 创建一个 shared_ptr
+    std::shared_ptr<int> ptr1 = std::make_shared<int>(10);
+
+    // 访问指针所指向的对象
+    std::cout << *ptr1 << std::endl;  // 输出 10
+
+    // 创建另一个 shared_ptr 指向同一个对象
+    std::shared_ptr<int> ptr2 = ptr1;
+
+    // 检查引用计数
+    std::cout << "Use count: " << ptr1.use_count() << std::endl;  // 输出 "Use count: 2"
+
+    return 0;
+}
+```
+
+#### 自定义删除器
+
+`std::shared_ptr` 支持自定义删除器，可以在对象被删除时执行特定的操作。
+
+```cpp
+#include <iostream>
+#include <memory>
+
+void customDeleter(int* ptr) {
+    std::cout << "Custom deleter called" << std::endl;
+    delete ptr;
+}
+
+int main() {
+    std::shared_ptr<int> ptr(new int(10), customDeleter);
+
+    std::cout << *ptr << std::endl;  // 输出 10
+
+    return 0;
+}
+```
+
+### 3. `std::weak_ptr`
+
+`std::weak_ptr` 是一种不控制对象生命周期的智能指针。它主要用于解决 `std::shared_ptr` 之间的循环引用问题。`std::weak_ptr` 不能直接访问对象，需要先转换为 `std::shared_ptr`。
+
+#### 基本用法
+
+```cpp
+#include <iostream>
+#include <memory>
+
+int main() {
+    // 创建一个 shared_ptr
+    std::shared_ptr<int> sharedPtr = std::make_shared<int>(10);
+
+    // 创建一个 weak_ptr
+    std::weak_ptr<int> weakPtr = sharedPtr;
+
+    // 检查 weak_ptr 是否仍然有效
+    if (!weakPtr.expired()) {
+        std::shared_ptr<int> sharedPtr2 = weakPtr.lock();  // 转换为 shared_ptr
+        std::cout << *sharedPtr2 << std::endl;  // 输出 10
+    } else {
+        std::cout << "weak_ptr has expired" << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 4. 总结
+
+- **`std::unique_ptr`**：独占所有权，确保在同一时间只有一个指针指向某个对象。支持移动语义，但不支持复制。
+- **`std::shared_ptr`**：共享所有权，多个指针可以同时指向同一个对象。当最后一个 `std::shared_ptr` 被销毁时，对象才会被删除。支持自定义删除器。
+- **`std::weak_ptr`**：不控制对象生命周期，主要用于解决 `std::shared_ptr` 之间的循环引用问题。需要先转换为 `std::shared_ptr` 才能访问对象。
+
+通过使用这些智能指针，可以有效地管理动态分配的内存，避免内存泄漏和其他内存管理问题。选择合适的智能指针取决于具体的应用场景和需求。
