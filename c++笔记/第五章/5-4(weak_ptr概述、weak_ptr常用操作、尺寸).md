@@ -24,7 +24,7 @@ int main()
     // 换句话说，就是将weak_ptr绑定到shared_ptr的引用计数，更确切的说，weak_ptr的构造和析构不会增加或者减少所指对象的引用计数
     // 当shared_ptr需要释放所指对象的时候，是不会管是否有weak_ptr指向的。
     
-    // 这个弱引用的作用，是用来监视shared_ptr的生命周期，是一种对shared_ptr的功能争强
+    // 这个弱引用的作用，是用来监视shared_ptr的生命周期，是一种对shared_ptr的功能增强
     
     // weak_ptr的创建
     // 我们创建一个weak_ptr的时候一般使用一个shared_ptr来进行初始化
@@ -107,7 +107,124 @@ int main()
 
 ```
 
+在C++中，智能指针的大小与其内部实现有关。不同的智能指针类型（如 `std::unique_ptr`、`std::shared_ptr` 和 `std::weak_ptr`）有不同的内部结构，因此它们的大小也不同。了解这些大小有助于优化内存使用和性能。
+
+### 1. `std::unique_ptr`
+
+`std::unique_ptr` 是一个轻量级的智能指针，通常只包含一个指针成员。它的大小通常与普通指针相同。
+
+#### 示例
+
+```cpp
+#include <iostream>
+#include <memory>
+
+int main() {
+    std::cout << "Size of std::unique_ptr<int>: " << sizeof(std::unique_ptr<int>) << " bytes" << std::endl;
+    std::cout << "Size of int*: " << sizeof(int*) << " bytes" << std::endl;
+    return 0;
+}
+```
+
+输出可能是：
+
+```
+Size of std::unique_ptr<int>: 8 bytes
+Size of int*: 8 bytes
+```
+
+### 2. `std::shared_ptr`
+
+`std::shared_ptr` 是一个更复杂的智能指针，因为它需要管理引用计数和控制块。控制块通常包含引用计数、弱引用计数和指向实际对象的指针。因此，`std::shared_ptr` 的大小通常大于 `std::unique_ptr`。
+
+#### 示例
+
+```cpp
+#include <iostream>
+#include <memory>
+
+int main() {
+    std::cout << "Size of std::shared_ptr<int>: " << sizeof(std::shared_ptr<int>) << " bytes" << std::endl;
+    std::cout << "Size of int*: " << sizeof(int*) << " bytes" << std::endl;
+    return 0;
+}
+```
+
+输出可能是：
+
+```
+Size of std::shared_ptr<int>: 16 bytes
+Size of int*: 8 bytes
+```
+
+### 3. `std::weak_ptr`
+
+`std::weak_ptr` 也是复杂的智能指针，它需要与 `std::shared_ptr` 共享控制块。因此，`std::weak_ptr` 的大小通常与 `std::shared_ptr` 相同。
+
+#### 示例
+
+```cpp
+#include <iostream>
+#include <memory>
+
+int main() {
+    std::cout << "Size of std::weak_ptr<int>: " << sizeof(std::weak_ptr<int>) << " bytes" << std::endl;
+    std::cout << "Size of std::shared_ptr<int>: " << sizeof(std::shared_ptr<int>) << " bytes" << std::endl;
+    return 0;
+}
+```
+
+输出可能是：
+
+```
+Size of std::weak_ptr<int>: 16 bytes
+Size of std::shared_ptr<int>: 16 bytes
+```
+
+### 详细解释
+
+#### `std::unique_ptr`
+
+- **内部结构**：通常包含一个指针成员。
+- **大小**：与普通指针相同，通常是8字节（在64位系统上）。
+
+#### `std::shared_ptr`
+
+- **内部结构**：
+  - 指向控制块的指针。
+  - 控制块包含：
+    - 引用计数。
+    - 弱引用计数。
+    - 指向实际对象的指针。
+- **大小**：通常为16字节（在64位系统上），因为需要存储指向控制块的指针。
+
+#### `std::weak_ptr`
+
+- **内部结构**：
+  - 指向控制块的指针。
+- **大小**：通常为16字节（在64位系统上），因为需要存储指向控制块的指针。
+
+### 影响因素
+
+- **平台和编译器**：不同平台和编译器可能会有不同的实现细节，导致智能指针的大小略有不同。
+- **自定义删除器**：如果 `std::shared_ptr` 使用了自定义删除器，可能会增加控制块的大小，从而影响 `std::shared_ptr` 和 `std::weak_ptr` 的大小。
+
+### 总结
+
+- **`std::unique_ptr`**：轻量级，通常与普通指针大小相同。
+- **`std::shared_ptr`**：复杂，包含控制块，通常为16字节（在64位系统上）。
+- **`std::weak_ptr`**：复杂，与 `std::shared_ptr` 共享控制块，通常为16字节（在64位系统上）。
+
+
+
+---
+
+
+
+
+
 weak_ptr概述与常见操作
+
 ```c++
 #include<iostream>
 #include<cstdlib>
