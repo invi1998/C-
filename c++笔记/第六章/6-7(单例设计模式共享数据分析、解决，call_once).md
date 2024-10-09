@@ -235,3 +235,228 @@ int main()
 
 
 ```
+
+
+
+在C++中，实现线程安全的单例模式是一个常见的需求。单例模式确保一个类只有一个实例，并提供一个全局访问点。为了确保线程安全，我们需要在实例化过程中进行适当的同步。以下是几种常见的线程安全单例模式实现方法：
+
+### 1. 饿汉式（静态成员变量）
+
+饿汉式在类加载时就创建实例，因此是线程安全的，但可能会浪费资源。
+
+```cpp
+#include <iostream>
+#include <mutex>
+
+class Singleton {
+public:
+    static Singleton& getInstance() {
+        return instance;
+    }
+
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+
+private:
+    Singleton() {}
+    ~Singleton() {}
+
+    static Singleton instance;
+};
+
+Singleton Singleton::instance;
+
+int main() {
+    Singleton& s1 = Singleton::getInstance();
+    Singleton& s2 = Singleton::getInstance();
+
+    if (&s1 == &s2) {
+        std::cout << "Same instance" << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 2. 懒汉式（双重检查锁定）
+
+懒汉式在第一次调用 `getInstance` 时创建实例，使用双重检查锁定确保线程安全。
+
+```cpp
+#include <iostream>
+#include <mutex>
+
+class Singleton {
+public:
+    static Singleton& getInstance() {
+        std::call_once(initInstanceFlag, &Singleton::init);
+        return *instance;
+    }
+
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+
+private:
+    Singleton() {}
+    ~Singleton() {}
+
+    static void init() {
+        instance = new Singleton();
+    }
+
+    static Singleton* instance;
+    static std::once_flag initInstanceFlag;
+};
+
+Singleton* Singleton::instance = nullptr;
+std::once_flag Singleton::initInstanceFlag;
+
+int main() {
+    Singleton& s1 = Singleton::getInstance();
+    Singleton& s2 = Singleton::getInstance();
+
+    if (&s1 == &s2) {
+        std::cout << "Same instance" << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 3. Meyer's 单例
+
+Meyer's 单例利用了局部静态变量的特性，保证了线程安全且延迟初始化。
+
+```cpp
+#include <iostream>
+
+class Singleton {
+public:
+    static Singleton& getInstance() {
+        static Singleton instance;
+        return instance;
+    }
+
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+
+private:
+    Singleton() {}
+    ~Singleton() {}
+};
+
+int main() {
+    Singleton& s1 = Singleton::getInstance();
+    Singleton& s2 = Singleton::getInstance();
+
+    if (&s1 == &s2) {
+        std::cout << "Same instance" << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 4. 使用 `std::call_once` 和 `std::once_flag`
+
+`std::call_once` 和 `std::once_flag` 确保初始化代码只执行一次，适用于懒汉式单例。
+
+```cpp
+#include <iostream>
+#include <mutex>
+
+class Singleton {
+public:
+    static Singleton& getInstance() {
+        std::call_once(initInstanceFlag, &Singleton::init);
+        return *instance;
+    }
+
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+
+private:
+    Singleton() {}
+    ~Singleton() {}
+
+    static void init() {
+        instance = new Singleton();
+    }
+
+    static Singleton* instance;
+    static std::once_flag initInstanceFlag;
+};
+
+Singleton* Singleton::instance = nullptr;
+std::once_flag Singleton::initInstanceFlag;
+
+int main() {
+    Singleton& s1 = Singleton::getInstance();
+    Singleton& s2 = Singleton::getInstance();
+
+    if (&s1 == &s2) {
+        std::cout << "Same instance" << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 5. 使用 `std::atomic` 和 `std::call_once`
+
+结合 `std::atomic` 和 `std::call_once` 进一步确保线程安全。
+
+```cpp
+#include <iostream>
+#include <mutex>
+#include <atomic>
+
+class Singleton {
+public:
+    static Singleton& getInstance() {
+        if (instance.load(std::memory_order_acquire) == nullptr) {
+            std::call_once(initInstanceFlag, &Singleton::init);
+        }
+        return *instance.load(std::memory_order_acquire);
+    }
+
+    Singleton(const Singleton&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+
+private:
+    Singleton() {}
+    ~Singleton() {}
+
+    static void init() {
+        Singleton* inst = new Singleton();
+        instance.store(inst, std::memory_order_release);
+    }
+
+    static std::atomic<Singleton*> instance;
+    static std::once_flag initInstanceFlag;
+};
+
+std::atomic<Singleton*> Singleton::instance{nullptr};
+std::once_flag Singleton::initInstanceFlag;
+
+int main() {
+    Singleton& s1 = Singleton::getInstance();
+    Singleton& s2 = Singleton::getInstance();
+
+    if (&s1 == &s2) {
+        std::cout << "Same instance" << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 总结
+
+- **饿汉式**：在类加载时创建实例，线程安全但可能浪费资源。
+- **懒汉式（双重检查锁定）**：在第一次调用 `getInstance` 时创建实例，使用双重检查锁定确保线程安全。
+- **Meyer's 单例**：利用局部静态变量的特性，保证线程安全且延迟初始化。
+- **使用 `std::call_once` 和 `std::once_flag`**：确保初始化代码只执行一次，适用于懒汉式单例。
+- **使用 `std::atomic` 和 `std::call_once`**：结合 `std::atomic` 和 `std::call_once` 进一步确保线程安全。
+
+通过这些方法，可以实现不同场景下的线程安全单例模式。选择哪种方法取决于具体的需求和性能考虑。
