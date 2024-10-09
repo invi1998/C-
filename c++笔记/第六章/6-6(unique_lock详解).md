@@ -22,7 +22,8 @@ std::unique_lock<std::mutex> lock(mtx);  // 立即锁定互斥量
 
 #### 2.2 延迟锁定
 
-使用 `std::defer_lock` 标记，不立即锁定互斥量，但允许后续手动锁定。
+使用 `std::defer_lock` 标记，不立即锁定互斥量，但允许后续手动锁定。用这个defer_lock的前提是你不能自己先lock，否则会报异常。
+defer_lock的意思就是并没有给mutex加锁：初始化了一个没有加锁的mutex。
 
 ```cpp
 std::unique_lock<std::mutex> lock(mtx, std::defer_lock);  // 延迟锁定
@@ -32,7 +33,10 @@ lock.unlock();  // 手动解锁
 
 #### 2.3 采用现有锁
 
-使用 `std::adopt_lock` 标记，假设互斥量已经被锁定，采用现有的锁。
+使用 `std::adopt_lock` 标记，假设互斥量已经被锁定，采用现有的锁。std::adopt_lock：表示这个互斥量已经被lock了（你必须要把互斥量提前lock了，否则会报异常）
+std::adopt_lock标记的效果就是“假设调用方线程已经拥有了互斥的所有权（已经lock()成功了）；通知lock_guard不需要在构造函数中lock这个互斥量了;
+unique_lock也可以带std::adopt_lock标记，含义相同，就是不希望在unique_lock()的构造函数中lock这个mutex。
+用这个adopt_lock的前提是，你需要自己先把mutex先lock上；
 
 ```cpp
 std::unique_lock<std::mutex> lock(mtx, std::adopt_lock);  // 采用现有锁
@@ -140,6 +144,134 @@ int main() {
   - 通过移动语义将锁从一个 `std::unique_lock` 对象转移到另一个。
 
 通过理解和使用这些功能，可以更灵活地管理互斥量，避免死锁和其他同步问题，提高多线程程序的可靠性和性能。
+
+---
+
+在C++中，`std::unique_lock` 提供了多种锁定策略，包括 `std::defer_lock` 和 `std::adopt_lock`。这些策略在使用时需要特别注意，以避免潜在的错误和异常。下面详细说明这两种策略的使用场景和注意事项。
+
+### 1. `std::defer_lock`
+
+`std::defer_lock` 标记表示在构造 `std::unique_lock` 时不会立即锁定互斥量，而是允许后续手动锁定。这种策略在需要延迟锁定互斥量的场景中非常有用。
+
+#### 1.1 正确使用 `std::defer_lock`
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+std::mutex mtx;
+
+void threadFunction() {
+    std::unique_lock<std::mutex> lock(mtx, std::defer_lock);  // 延迟锁定
+    // 在这里可以进行一些操作
+    lock.lock();  // 手动锁定
+    std::cout << "Thread locked the mutex" << std::endl;
+    lock.unlock();  // 手动解锁
+}
+
+int main() {
+    std::thread t(threadFunction);
+    t.join();
+
+    return 0;
+}
+```
+
+#### 1.2 提前锁定
+
+如果你在构造 `std::unique_lock` 时使用 `std::defer_lock`，但在后续代码中忘记手动锁定，程序可能会出现未定义行为，因为互斥量没有被锁定。
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+std::mutex mtx;
+
+void threadFunction() {
+    std::unique_lock<std::mutex> lock(mtx, std::defer_lock);  // 延迟锁定
+    // 忘记手动锁定
+    std::cout << "Thread locked the mutex" << std::endl;  // 未定义行为
+}
+
+int main() {
+    std::thread t(threadFunction);
+    t.join();
+
+    return 0;
+}
+```
+
+### 2. `std::adopt_lock`
+
+`std::adopt_lock` 标记表示在构造 `std::unique_lock` 时假设互斥量已经被锁定。这种策略在需要采用现有锁的场景中非常有用。
+
+#### 2.1 正确使用 `std::adopt_lock`
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+std::mutex mtx;
+
+void threadFunction() {
+    mtx.lock();  // 先手动锁定互斥量
+    std::unique_lock<std::mutex> lock(mtx, std::adopt_lock);  // 采用现有锁
+    std::cout << "Thread adopted the lock" << std::endl;
+    // 在这里可以进行一些操作
+    lock.unlock();  // 手动解锁
+}
+
+int main() {
+    std::thread t(threadFunction);
+    t.join();
+
+    return 0;
+}
+```
+
+#### 2.2 提前不锁定
+
+如果你在构造 `std::unique_lock` 时使用 `std::adopt_lock`，但互斥量实际上没有被锁定，程序会抛出 `std::system_error` 异常。
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+std::mutex mtx;
+
+void threadFunction() {
+    // 忘记手动锁定互斥量
+    std::unique_lock<std::mutex> lock(mtx, std::adopt_lock);  // 采用现有锁
+    std::cout << "Thread adopted the lock" << std::endl;  // 抛出异常
+}
+
+int main() {
+    try {
+        std::thread t(threadFunction);
+        t.join();
+    } catch (const std::system_error& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 3. 总结
+
+- **`std::defer_lock`**：
+  - **正确使用**：在构造 `std::unique_lock` 时使用 `std::defer_lock`，并在后续代码中手动锁定互斥量。
+  - **提前锁定**：如果忘记手动锁定，程序可能会出现未定义行为。
+
+- **`std::adopt_lock`**：
+  - **正确使用**：在构造 `std::unique_lock` 时使用 `std::adopt_lock`，并确保互斥量在构造之前已经被锁定。
+  - **提前不锁定**：如果互斥量没有被锁定，程序会抛出 `std::system_error` 异常。
+
+通过理解和遵循这些规则，可以避免因错误使用 `std::defer_lock` 和 `std::adopt_lock` 导致的程序错误和异常。
 
 ---
 
