@@ -1,3 +1,152 @@
+`std::unique_lock` 是 C++ 标准库中提供的一个灵活的互斥量锁管理类。它不仅支持自动管理锁的生命周期，还提供了多种锁定策略和所有权传递的方法。本文将详细介绍 `std::unique_lock` 的用法，包括其构造函数的第二个参数、不同的锁定策略、成员函数以及所有权的传递。
+
+### 1. `std::unique_lock` 构造函数的第二个参数
+
+`std::unique_lock` 的构造函数允许你指定不同的锁定策略。这些策略通过传递不同的标记来实现，主要包括：
+
+- **默认构造**：不立即锁定互斥量。
+- **立即锁定**：立即尝试锁定互斥量。
+- **延迟锁定**：不立即锁定互斥量，但允许后续手动锁定。
+- **采用现有锁**：假设互斥量已经被锁定，采用现有的锁。
+- **尝试锁定**：尝试锁定互斥量，如果无法立即锁定则返回。
+
+### 2. 不同的锁定策略
+
+#### 2.1 默认构造
+
+默认构造函数不立即锁定互斥量。
+
+```cpp
+std::unique_lock<std::mutex> lock(mtx);  // 立即锁定互斥量
+```
+
+#### 2.2 延迟锁定
+
+使用 `std::defer_lock` 标记，不立即锁定互斥量，但允许后续手动锁定。
+
+```cpp
+std::unique_lock<std::mutex> lock(mtx, std::defer_lock);  // 延迟锁定
+lock.lock();  // 手动锁定
+lock.unlock();  // 手动解锁
+```
+
+#### 2.3 采用现有锁
+
+使用 `std::adopt_lock` 标记，假设互斥量已经被锁定，采用现有的锁。
+
+```cpp
+std::unique_lock<std::mutex> lock(mtx, std::adopt_lock);  // 采用现有锁
+// 在这里使用锁
+lock.unlock();  // 手动解锁
+```
+
+#### 2.4 尝试锁定
+
+使用 `std::try_to_lock` 标记，尝试锁定互斥量，如果无法立即锁定则返回。
+
+```cpp
+std::unique_lock<std::mutex> lock(mtx, std::try_to_lock);  // 尝试锁定
+if (lock.owns_lock()) {
+    // 锁定成功
+} else {
+    // 锁定失败
+}
+```
+
+### 3. `std::unique_lock` 的成员函数
+
+`std::unique_lock` 提供了多个成员函数来管理锁的状态：
+
+- **`lock()`**：尝试锁定互斥量。
+- **`unlock()`**：解锁互斥量。
+- **`owns_lock()`**：检查是否拥有锁。
+- **`try_lock()`**：尝试锁定互斥量，如果无法立即锁定则返回。
+- **`release()`**：释放对互斥量的所有权，返回互斥量的指针。
+- **`swap()`**：交换两个 `std::unique_lock` 对象的状态。
+
+#### 3.1 示例
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+std::mutex mtx;
+
+void threadFunction() {
+    std::unique_lock<std::mutex> lock(mtx, std::defer_lock);  // 延迟锁定
+    lock.lock();  // 手动锁定
+    std::cout << "Thread locked the mutex" << std::endl;
+    lock.unlock();  // 手动解锁
+}
+
+int main() {
+    std::thread t(threadFunction);
+    t.join();
+
+    return 0;
+}
+```
+
+### 4. `std::unique_lock` 所有权的传递
+
+`std::unique_lock` 支持所有权的传递，可以通过移动语义将锁从一个 `std::unique_lock` 对象转移到另一个。
+
+#### 4.1 示例
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+std::mutex mtx;
+
+void threadFunction(std::unique_lock<std::mutex>&& lock) {
+    if (lock.owns_lock()) {
+        std::cout << "Thread owns the lock" << std::endl;
+    } else {
+        std::cout << "Thread does not own the lock" << std::endl;
+    }
+}
+
+int main() {
+    std::unique_lock<std::mutex> lock(mtx, std::defer_lock);  // 延迟锁定
+    lock.lock();  // 手动锁定
+
+    std::thread t(threadFunction, std::move(lock));  // 传递所有权
+    t.join();
+
+    return 0;
+}
+```
+
+### 5. 总结
+
+- **`std::unique_lock` 构造函数的第二个参数**：
+  - **默认构造**：不立即锁定互斥量。
+  - **`std::defer_lock`**：延迟锁定，允许后续手动锁定。
+  - **`std::adopt_lock`**：采用现有锁，假设互斥量已经被锁定。
+  - **`std::try_to_lock`**：尝试锁定互斥量，如果无法立即锁定则返回。
+
+- **`std::unique_lock` 的成员函数**：
+  - **`lock()`**：尝试锁定互斥量。
+  - **`unlock()`**：解锁互斥量。
+  - **`owns_lock()`**：检查是否拥有锁。
+  - **`try_lock()`**：尝试锁定互斥量，如果无法立即锁定则返回。
+  - **`release()`**：释放对互斥量的所有权，返回互斥量的指针。
+  - **`swap()`**：交换两个 `std::unique_lock` 对象的状态。
+
+- **`std::unique_lock` 所有权的传递**：
+  - 通过移动语义将锁从一个 `std::unique_lock` 对象转移到另一个。
+
+通过理解和使用这些功能，可以更灵活地管理互斥量，避免死锁和其他同步问题，提高多线程程序的可靠性和性能。
+
+---
+
+
+
+
+
 * （1）unique_lock取代lock_guard
 * （2）unique_lock的第二个参数
 * （2.1）std::adopt_lock
