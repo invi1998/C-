@@ -347,3 +347,177 @@ int main()
 }
 
 ```
+
+
+
+在Windows编程中，临界区（Critical Section）是一种轻量级的同步机制，用于保护共享资源，防止多个线程同时访问。然而，临界区不支持递归进入，即同一个线程不能多次进入同一个临界区。为了解决这个问题，C++ 提供了 `std::recursive_mutex` 和 `std::recursive_timed_mutex`，它们支持递归进入，并且可以带超时功能。
+
+### 1. Windows 临界区
+
+#### 1.1 初始化和销毁临界区
+
+```cpp
+CRITICAL_SECTION cs;
+InitializeCriticalSection(&cs);
+// 使用临界区
+DeleteCriticalSection(&cs);
+```
+
+#### 1.2 进入和离开临界区
+
+```cpp
+EnterCriticalSection(&cs);
+// 临界区代码
+LeaveCriticalSection(&cs);
+```
+
+### 2. `std::recursive_mutex`
+
+`std::recursive_mutex` 是一个递归的独占互斥量，允许同一个线程多次获取锁，而不会导致死锁。
+
+#### 2.1 使用 `std::recursive_mutex`
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+std::recursive_mutex rm;
+
+void recursiveFunction(int depth) {
+    std::lock_guard<std::recursive_mutex> lock(rm);
+    std::cout << "Depth: " << depth << std::endl;
+
+    if (depth > 0) {
+        recursiveFunction(depth - 1);
+    }
+}
+
+int main() {
+    std::thread t1(recursiveFunction, 3);
+    std::thread t2(recursiveFunction, 2);
+
+    t1.join();
+    t2.join();
+
+    return 0;
+}
+```
+
+### 3. `std::timed_mutex`
+
+`std::timed_mutex` 是一个带有超时功能的互斥量，允许在尝试获取锁时指定一个超时时间。
+
+#### 3.1 使用 `std::timed_mutex`
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <chrono>
+
+std::timed_mutex tm;
+
+void timedMutexFunction() {
+    if (tm.try_lock_for(std::chrono::seconds(1))) {
+        std::cout << "Lock acquired" << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(2));  // 模拟耗时操作
+        tm.unlock();
+    } else {
+        std::cout << "Failed to acquire lock" << std::endl;
+    }
+}
+
+int main() {
+    std::thread t1(timedMutexFunction);
+    std::thread t2(timedMutexFunction);
+
+    t1.join();
+    t2.join();
+
+    return 0;
+}
+```
+
+### 4. `std::recursive_timed_mutex`
+
+`std::recursive_timed_mutex` 结合了 `std::recursive_mutex` 和 `std::timed_mutex` 的功能，既支持递归进入，又支持超时功能。
+
+#### 4.1 使用 `std::recursive_timed_mutex`
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <chrono>
+
+std::recursive_timed_mutex rtm;
+
+void recursiveTimedMutexFunction(int depth) {
+    if (rtm.try_lock_for(std::chrono::seconds(1))) {
+        std::lock_guard<std::recursive_timed_mutex> lock(rtm, std::adopt_lock);
+        std::cout << "Depth: " << depth << std::endl;
+
+        if (depth > 0) {
+            recursiveTimedMutexFunction(depth - 1);
+        }
+
+        rtm.unlock();
+    } else {
+        std::cout << "Failed to acquire lock at depth: " << depth << std::endl;
+    }
+}
+
+int main() {
+    std::thread t1(recursiveTimedMutexFunction, 3);
+    std::thread t2(recursiveTimedMutexFunction, 2);
+
+    t1.join();
+    t2.join();
+
+    return 0;
+}
+```
+
+### 5. 自动释放锁技术
+
+#### 5.1 使用 `std::lock_guard`
+
+`std::lock_guard` 是一个 RAII（Resource Acquisition Is Initialization）风格的锁管理器，确保在作用域结束时自动释放锁。
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+std::recursive_mutex rm;
+
+void autoReleaseLockFunction(int depth) {
+    std::lock_guard<std::recursive_mutex> lock(rm);
+    std::cout << "Depth: " << depth << std::endl;
+
+    if (depth > 0) {
+        autoReleaseLockFunction(depth - 1);
+    }
+}
+
+int main() {
+    std::thread t1(autoReleaseLockFunction, 3);
+    std::thread t2(autoReleaseLockFunction, 2);
+
+    t1.join();
+    t2.join();
+
+    return 0;
+}
+```
+
+### 6. 总结
+
+- **Windows 临界区**：轻量级的同步机制，不支持递归进入。
+- **`std::recursive_mutex`**：支持递归进入的独占互斥量。
+- **`std::timed_mutex`**：带有超时功能的互斥量。
+- **`std::recursive_timed_mutex`**：结合了递归进入和超时功能的互斥量。
+- **自动释放锁技术**：使用 `std::lock_guard` 确保在作用域结束时自动释放锁。
+
+通过这些机制，可以有效地管理和同步多线程环境中的共享资源，提高程序的并发性能和安全性。
