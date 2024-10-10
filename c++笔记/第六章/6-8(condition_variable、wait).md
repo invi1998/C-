@@ -2,6 +2,174 @@
 * （2）上述代码深入思考
 * （3）notify_all()
 
+在C++中，`std::condition_variable` 是一个用于线程间同步的工具，通常与 `std::mutex` 一起使用。条件变量允许一个或多个线程等待某个条件成立，然后由其他线程通知这些等待的线程继续执行。本文将详细介绍 `std::condition_variable` 的用法，包括 `wait` 和 `notify_one` 函数。
+
+### 1. `std::condition_variable` 基本概念
+
+`std::condition_variable` 提供了以下主要功能：
+
+- **`wait`**：使当前线程进入等待状态，直到被通知或超时。
+- **`notify_one`**：唤醒一个正在等待的线程。
+- **`notify_all`**：唤醒所有正在等待的线程。
+
+### 2. 基本用法
+
+#### 2.1 包含头文件
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+```
+
+#### 2.2 定义互斥量和条件变量
+
+```cpp
+std::mutex mtx;
+std::condition_variable cv;
+bool ready = false;
+```
+
+#### 2.3 生产者线程
+
+生产者线程设置条件并通知消费者线程。
+
+```cpp
+void producer() {
+    std::this_thread::sleep_for(std::chrono::seconds(1));  // 模拟耗时操作
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        ready = true;
+    }
+    cv.notify_one();  // 通知一个等待的线程
+}
+```
+
+#### 2.4 消费者线程
+
+消费者线程等待条件成立后继续执行。
+
+```cpp
+void consumer() {
+    std::unique_lock<std::mutex> lock(mtx);
+    cv.wait(lock, [] { return ready; });  // 等待条件成立
+    std::cout << "Consumer: Ready is true" << std::endl;
+}
+```
+
+#### 2.5 主函数
+
+创建生产者和消费者线程，并等待它们完成。
+
+```cpp
+int main() {
+    std::thread t1(producer);
+    std::thread t2(consumer);
+
+    t1.join();
+    t2.join();
+
+    return 0;
+}
+```
+
+### 3. 详细说明
+
+#### 3.1 `wait`
+
+`wait` 函数使当前线程进入等待状态，直到被通知或超时。`wait` 需要一个 `std::unique_lock` 对象作为参数，该锁必须在调用 `wait` 时持有互斥量。
+
+```cpp
+cv.wait(lock, [] { return ready; });
+```
+
+在这个例子中，`cv.wait(lock, [] { return ready; })` 会一直等待，直到 `ready` 变为 `true`。`lock` 是一个 `std::unique_lock` 对象，它在调用 `wait` 时会自动释放互斥量，在 `wait` 返回时重新获取互斥量。
+
+#### 3.2 `notify_one`
+
+`notify_one` 函数唤醒一个正在等待的线程。如果有多个线程在等待，选择哪个线程被唤醒是不确定的。
+
+```cpp
+cv.notify_one();
+```
+
+#### 3.3 `notify_all`
+
+`notify_all` 函数唤醒所有正在等待的线程。所有被唤醒的线程都会竞争互斥量，只有获取到互斥量的线程才能继续执行。
+
+```cpp
+cv.notify_all();
+```
+
+### 4. 完整示例
+
+以下是一个完整的示例，展示了如何使用 `std::condition_variable` 实现生产者-消费者模式。
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
+
+std::mutex mtx;
+std::condition_variable cv;
+std::queue<int> data_queue;
+bool done = false;
+
+void producer() {
+    for (int i = 0; i < 10; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // 模拟耗时操作
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            data_queue.push(i);
+        }
+        cv.notify_one();  // 通知一个等待的线程
+    }
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        done = true;
+    }
+    cv.notify_all();  // 通知所有等待的线程
+}
+
+void consumer() {
+    while (true) {
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [] { return !data_queue.empty() || done; });
+
+        if (!data_queue.empty()) {
+            int data = data_queue.front();
+            data_queue.pop();
+            lock.unlock();
+            std::cout << "Consumer: Consumed data " << data << std::endl;
+        } else if (done) {
+            break;
+        }
+    }
+}
+
+int main() {
+    std::thread t1(producer);
+    std::thread t2(consumer);
+
+    t1.join();
+    t2.join();
+
+    return 0;
+}
+```
+
+### 5. 总结
+
+- **`std::condition_variable`**：用于线程间同步的工具。
+- **`wait`**：使当前线程进入等待状态，直到被通知或超时。
+- **`notify_one`**：唤醒一个正在等待的线程。
+- **`notify_all`**：唤醒所有正在等待的线程。
+
+通过合理使用 `std::condition_variable`，可以实现高效的线程间同步，避免忙等待和资源浪费。
+
 # 一：条件变量std::condition_variable、wait()、notify_one()
 
 线程A：等待一个条件满足

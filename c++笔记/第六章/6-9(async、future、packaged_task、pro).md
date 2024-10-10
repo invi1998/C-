@@ -5,6 +5,109 @@
 （4）小结
  -->
 
+
+
+在C++中，`std::async` 和 `std::thread` 都是用于并发编程的工具，但它们在设计理念、使用方式和行为上有显著的区别。以下是 `std::async` 和 `std::thread` 的主要区别：
+
+### 1. 设计理念
+
+#### `std::thread`
+- **底层控制**：`std::thread` 提供了对操作系统线程的直接控制，允许开发者手动管理线程的生命周期。
+- **灵活性**：`std::thread` 适合需要细粒度控制线程的应用，如手动调度、线程池等。
+
+#### `std::async`
+- **高层抽象**：`std::async` 提供了一个更高层次的抽象，用于异步任务的执行。它隐藏了线程管理的细节，简化了异步编程。
+- **自动管理**：`std::async` 自动管理任务的执行和结果的获取，适合需要异步执行任务但不需要手动管理线程的应用。
+
+### 2. 使用方式
+
+#### `std::thread`
+- **创建线程**：通过 `std::thread` 构造函数创建线程，传递一个可调用对象（如函数、lambda 表达式等）。
+- **手动管理**：需要手动调用 `join` 或 `detach` 来管理线程的生命周期。
+
+```cpp
+#include <iostream>
+#include <thread>
+
+void threadFunction() {
+    std::cout << "Thread function running" << std::endl;
+}
+
+int main() {
+    std::thread t(threadFunction);
+    t.join();  // 等待线程完成
+
+    return 0;
+}
+```
+
+#### `std::async`
+- **创建异步任务**：通过 `std::async` 创建异步任务，返回一个 `std::future` 对象，用于获取任务的结果。
+- **自动管理**：`std::async` 会自动管理任务的执行和结果的获取，无需手动管理线程。
+
+```cpp
+#include <iostream>
+#include <future>
+
+int asyncFunction() {
+    std::this_thread::sleep_for(std::chrono::seconds(1));  // 模拟耗时操作
+    return 42;
+}
+
+int main() {
+    std::future<int> result = std::async(std::launch::async, asyncFunction);
+    std::cout << "Doing some work in the main thread" << std::endl;
+    int value = result.get();  // 等待任务完成并获取结果
+    std::cout << "Async function returned: " << value << std::endl;
+
+    return 0;
+}
+```
+
+### 3. 行为差异
+
+#### `std::thread`
+- **立即执行**：`std::thread` 创建的线程会立即开始执行。
+- **手动同步**：需要手动使用互斥量、条件变量等同步机制来协调线程之间的通信和同步。
+
+#### `std::async`
+- **延迟执行**：`std::async` 创建的任务可能不会立即执行，具体行为取决于 `std::launch` 策略。
+- **自动同步**：`std::async` 通过 `std::future` 自动管理任务的同步，调用 `get` 时会阻塞，直到任务完成。
+
+### 4. 性能和资源管理
+
+#### `std::thread`
+- **资源管理**：需要手动管理线程资源，如调用 `join` 或 `detach`。
+- **开销**：创建和销毁线程的开销较大，适合长期运行的任务。
+
+#### `std::async`
+- **资源管理**：`std::async` 自动管理任务的资源，适合短小的异步任务。
+- **开销**：`std::async` 的开销相对较小，但具体行为取决于实现（如可能使用线程池）。
+
+### 5. 使用场景
+
+#### `std::thread`
+- **适合场景**：需要细粒度控制线程的应用，如手动调度、线程池、长时间运行的任务。
+- **示例**：网络服务器、实时数据处理等。
+
+#### `std::async`
+- **适合场景**：需要异步执行任务但不需要手动管理线程的应用，如异步IO、短小的任务。
+- **示例**：文件读写、网络请求、计算密集型任务等。
+
+### 总结
+
+- **`std::thread`**：
+  - **底层控制**：直接管理操作系统线程。
+  - **灵活性**：适合需要细粒度控制线程的应用。
+  - **手动管理**：需要手动管理线程的生命周期和同步。
+
+- **`std::async`**：
+  - **高层抽象**：提供异步任务的自动管理。
+  - **自动管理**：自动管理任务的执行和结果的获取。
+  - **适合场景**：适合需要异步执行任务但不需要手动管理线程的应用。
+
+选择 `std::thread` 还是 `std::async` 取决于具体的应用需求和开发者的偏好。对于需要细粒度控制和高性能的应用，`std::thread` 是更好的选择；对于需要简单异步任务管理的应用，`std::async` 更为合适。
+
 # 一：std::async、std::future创建后台任务并返回值
 
 希望线程返回一个结果；
@@ -51,7 +154,7 @@ void main()
 }
 ```
 
-# 二：std::package_tack: 打包任务，把任务包装起来
+# 二：std::package_task: 打包任务，把任务包装起来
 
 是个类模板，它的模板参数是各种可调用对象；通过std::package_task来把各种可调用对象包装起来，方便将来作为线程入口函数
 
@@ -83,6 +186,133 @@ std::future<int> result = mypt2.get_future();
 cout<<result.get()<<endl;
 ```
 
+`std::packaged_task`，这是一个 C++ 标准库中的类模板，用于封装可调用对象（如函数、lambda 表达式等），并将其转换为异步任务。`std::packaged_task` 与 `std::future` 和 `std::promise` 一起使用，可以实现异步任务的创建、执行和结果的获取。
+
+### 1. `std::packaged_task` 基本概念
+
+`std::packaged_task` 是一个类模板，用于封装一个可调用对象，并提供一个 `std::future` 来获取任务的结果。`std::packaged_task` 的主要用途是将任务的执行与结果的获取分离，使得任务可以在一个线程中执行，而在另一个线程中获取结果。
+
+### 2. 基本用法
+
+#### 2.1 包含头文件
+
+```cpp
+#include <iostream>
+#include <future>
+#include <thread>
+```
+
+#### 2.2 创建 `std::packaged_task`
+
+```cpp
+std::packaged_task<int()> task([]() {
+    std::this_thread::sleep_for(std::chrono::seconds(1));  // 模拟耗时操作
+    return 42;
+});
+```
+
+#### 2.3 获取 `std::future`
+
+```cpp
+std::future<int> result = task.get_future();
+```
+
+#### 2.4 执行任务
+
+```cpp
+std::thread t(std::move(task));
+t.join();
+```
+
+#### 2.5 获取结果
+
+```cpp
+int value = result.get();
+std::cout << "Task returned: " << value << std::endl;
+```
+
+### 3. 完整示例
+
+以下是一个完整的示例，展示了如何使用 `std::packaged_task` 创建和执行异步任务，并获取结果。
+
+```cpp
+#include <iostream>
+#include <future>
+#include <thread>
+
+int main() {
+    // 创建一个 packaged_task，封装一个 lambda 表达式
+    std::packaged_task<int()> task([]() {
+        std::this_thread::sleep_for(std::chrono::seconds(1));  // 模拟耗时操作
+        return 42;
+    });
+
+    // 获取 future 对象，用于获取任务的结果
+    std::future<int> result = task.get_future();
+
+    // 在新线程中执行任务
+    std::thread t(std::move(task));
+    t.join();
+
+    // 获取任务的结果
+    int value = result.get();
+    std::cout << "Task returned: " << value << std::endl;
+
+    return 0;
+}
+```
+
+### 4. 详细说明
+
+#### 4.1 创建 `std::packaged_task`
+
+`std::packaged_task` 的构造函数接受一个可调用对象（如函数、lambda 表达式等），并将其实例化为一个特定类型的 `std::packaged_task`。
+
+```cpp
+std::packaged_task<int()> task([]() {
+    std::this_thread::sleep_for(std::chrono::seconds(1));  // 模拟耗时操作
+    return 42;
+});
+```
+
+#### 4.2 获取 `std::future`
+
+`std::packaged_task` 提供了 `get_future` 方法，用于获取一个 `std::future` 对象，该对象可以用来获取任务的结果。
+
+```cpp
+std::future<int> result = task.get_future();
+```
+
+#### 4.3 执行任务
+
+`std::packaged_task` 可以通过调用其 `operator()` 来执行任务。通常情况下，任务会在一个新线程中执行，因此需要将 `std::packaged_task` 移动到新线程中。
+
+```cpp
+std::thread t(std::move(task));
+t.join();
+```
+
+#### 4.4 获取结果
+
+`std::future` 对象的 `get` 方法会阻塞，直到任务完成并返回结果。
+
+```cpp
+int value = result.get();
+std::cout << "Task returned: " << value << std::endl;
+```
+
+### 5. 优点
+
+- **异步任务**：`std::packaged_task` 使得任务的执行和结果的获取分离，适合异步编程。
+- **灵活性**：可以封装任何可调用对象，包括函数、lambda 表达式、函数对象等。
+- **线程安全**：`std::future` 和 `std::packaged_task` 的组合提供了线程安全的机制，确保任务的执行和结果的获取不会产生竞态条件。
+
+### 6. 注意事项
+
+- **移动语义**：`std::packaged_task` 不支持拷贝，只能通过移动语义传递。
+- **资源管理**：`std::packaged_task` 的生命周期需要谨慎管理，确保在任务完成之前不被销毁。
+
+通过使用 `std::packaged_task`，可以更方便地实现异步任务的创建和管理，提高程序的并发性能。
 
 # 三：std::promise类模板
 
@@ -314,3 +544,173 @@ int main()
 }
 
 ```
+
+
+
+`std::promise` 是 C++ 标准库中用于异步编程的一个类模板，它提供了一种机制来设置异步操作的结果。`std::promise` 与 `std::future` 一起使用，`std::promise` 用于设置结果，而 `std::future` 用于获取结果。这种方式使得异步任务的执行和结果的获取分离，提高了代码的灵活性和可维护性。
+
+### 1. `std::promise` 基本概念
+
+- **`std::promise`**：用于设置异步操作的结果。
+- **`std::future`**：用于获取异步操作的结果。
+
+### 2. 基本用法
+
+#### 2.1 包含头文件
+
+```cpp
+#include <iostream>
+#include <future>
+#include <thread>
+```
+
+#### 2.2 创建 `std::promise` 和 `std::future`
+
+```cpp
+std::promise<int> promise;
+std::future<int> future = promise.get_future();
+```
+
+#### 2.3 设置结果
+
+在异步任务中，使用 `std::promise` 的 `set_value` 方法设置结果。
+
+```cpp
+void asyncFunction(std::promise<int> p) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));  // 模拟耗时操作
+    p.set_value(42);  // 设置结果
+}
+```
+
+#### 2.4 获取结果
+
+在主线程中，使用 `std::future` 的 `get` 方法获取结果。
+
+```cpp
+int main() {
+    std::promise<int> promise;
+    std::future<int> future = promise.get_future();
+
+    std::thread t(asyncFunction, std::move(promise));
+    t.join();
+
+    int value = future.get();  // 获取结果
+    std::cout << "Async function returned: " << value << std::endl;
+
+    return 0;
+}
+```
+
+### 3. 完整示例
+
+以下是一个完整的示例，展示了如何使用 `std::promise` 和 `std::future` 创建和执行异步任务，并获取结果。
+
+```cpp
+#include <iostream>
+#include <future>
+#include <thread>
+
+void asyncFunction(std::promise<int> p) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));  // 模拟耗时操作
+    p.set_value(42);  // 设置结果
+}
+
+int main() {
+    std::promise<int> promise;
+    std::future<int> future = promise.get_future();
+
+    std::thread t(asyncFunction, std::move(promise));
+    t.join();
+
+    int value = future.get();  // 获取结果
+    std::cout << "Async function returned: " << value << std::endl;
+
+    return 0;
+}
+```
+
+### 4. 详细说明
+
+#### 4.1 创建 `std::promise` 和 `std::future`
+
+```cpp
+std::promise<int> promise;
+std::future<int> future = promise.get_future();
+```
+
+- **`std::promise<int>`**：创建一个 `std::promise` 对象，用于设置 `int` 类型的结果。
+- **`promise.get_future()`**：从 `std::promise` 对象中获取一个 `std::future` 对象，用于获取结果。
+
+#### 4.2 设置结果
+
+在异步任务中，使用 `std::promise` 的 `set_value` 方法设置结果。
+
+```cpp
+p.set_value(42);  // 设置结果
+```
+
+- **`set_value`**：设置 `std::promise` 的结果。一旦设置，关联的 `std::future` 对象就可以通过 `get` 方法获取结果。
+
+#### 4.3 获取结果
+
+在主线程中，使用 `std::future` 的 `get` 方法获取结果。
+
+```cpp
+int value = future.get();  // 获取结果
+```
+
+- **`get`**：阻塞当前线程，直到结果可用，然后返回结果。如果任务抛出异常，`get` 也会重新抛出该异常。
+
+### 5. 优点
+
+- **异步任务**：`std::promise` 和 `std::future` 使得任务的执行和结果的获取分离，适合异步编程。
+- **灵活性**：可以用于多种异步操作，如网络请求、文件读写等。
+- **线程安全**：`std::promise` 和 `std::future` 的组合提供了线程安全的机制，确保任务的执行和结果的获取不会产生竞态条件。
+
+### 6. 注意事项
+
+- **移动语义**：`std::promise` 不支持拷贝，只能通过移动语义传递。
+- **资源管理**：`std::promise` 和 `std::future` 的生命周期需要谨慎管理，确保在任务完成之前不被销毁。
+- **异常处理**：如果异步任务抛出异常，可以使用 `set_exception` 方法设置异常，`std::future` 的 `get` 方法会重新抛出该异常。
+
+### 7. 其他方法
+
+- **`set_exception`**：设置 `std::promise` 的异常，关联的 `std::future` 对象在调用 `get` 时会重新抛出该异常。
+- **`get_future`**：从 `std::promise` 对象中获取一个 `std::future` 对象。
+
+### 8. 示例：设置异常
+
+```cpp
+#include <iostream>
+#include <future>
+#include <thread>
+#include <exception>
+
+void asyncFunction(std::promise<int> p) {
+    try {
+        std::this_thread::sleep_for(std::chrono::seconds(1));  // 模拟耗时操作
+        throw std::runtime_error("An error occurred");
+    } catch (...) {
+        p.set_exception(std::current_exception());  // 设置异常
+    }
+}
+
+int main() {
+    std::promise<int> promise;
+    std::future<int> future = promise.get_future();
+
+    std::thread t(asyncFunction, std::move(promise));
+    t.join();
+
+    try {
+        int value = future.get();  // 获取结果
+        std::cout << "Async function returned: " << value << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+通过使用 `std::promise` 和 `std::future`，可以更方便地实现异步任务的创建和管理，提高程序的并发性能和可维护性。
