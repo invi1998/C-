@@ -709,3 +709,187 @@ int main()
 
 
 ```
+
+`decltype` 是 C++11 引入的一个关键字，用于查询表达式的类型。`decltype` 可以在编译时推导出表达式的类型，这对于模板编程和泛型编程非常有用。下面详细介绍 `decltype` 的用法和一些示例。
+
+### 1. `decltype` 的基本用法
+
+`decltype` 有两种主要用法：
+
+1. **表达式**：`decltype(expr)` 返回表达式 `expr` 的类型。
+2. **声明**：`decltype((expr))` 返回表达式 `expr` 的引用类型（如果 `expr` 是左值）。
+
+### 2. 示例
+
+#### 2.1 基本类型
+
+```cpp
+#include <iostream>
+
+int main() {
+    int x = 42;
+    decltype(x) y = x;  // y 的类型是 int
+
+    std::cout << "y: " << y << std::endl;
+
+    return 0;
+}
+```
+
+#### 2.2 表达式
+
+```cpp
+#include <iostream>
+
+int main() {
+    int x = 42;
+    int y = 100;
+    decltype(x + y) z = x + y;  // z 的类型是 int
+
+    std::cout << "z: " << z << std::endl;
+
+    return 0;
+}
+```
+
+#### 2.3 引用类型
+
+```cpp
+#include <iostream>
+
+int main() {
+    int x = 42;
+    decltype((x)) ref = x;  // ref 的类型是 int&
+
+    ref = 100;  // 修改 x 的值
+    std::cout << "x: " << x << std::endl;
+
+    return 0;
+}
+```
+
+### 3. `decltype` 与 `auto`
+
+`decltype` 经常与 `auto` 一起使用，以实现更灵活的类型推导。
+
+#### 3.1 `auto` 与 `decltype`
+
+```cpp
+#include <iostream>
+
+int main() {
+    int x = 42;
+    auto y = x;  // y 的类型是 int
+
+    decltype(x) z = x;  // z 的类型是 int
+
+    std::cout << "y: " << y << std::endl;
+    std::cout << "z: " << z << std::endl;
+
+    return 0;
+}
+```
+
+#### 3.2 `auto` 与 `decltype` 的结合
+
+```cpp
+#include <iostream>
+
+int main() {
+    int x = 42;
+    auto& ref = x;  // ref 的类型是 int&
+
+    ref = 100;  // 修改 x 的值
+    std::cout << "x: " << x << std::endl;
+
+    return 0;
+}
+```
+
+### 4. `decltype` 在模板中的应用
+
+`decltype` 在模板编程中非常有用，可以用于推导模板参数的类型。
+
+#### 4.1 模板函数
+
+```cpp
+#include <iostream>
+
+template <typename T, typename U>
+auto add(T t, U u) -> decltype(t + u) {
+    return t + u;
+}
+
+int main() {
+    int x = 42;
+    double y = 100.5;
+    auto result = add(x, y);  // result 的类型是 double
+
+    std::cout << "result: " << result << std::endl;
+
+    return 0;
+}
+```
+
+#### 4.2 模板类
+
+```cpp
+#include <iostream>
+
+template <typename T>
+class Wrapper {
+public:
+    T value;
+
+    Wrapper(T v) : value(v) {}
+
+    decltype(value) get() const {
+        return value;
+    }
+};
+
+int main() {
+    Wrapper<int> w(42);
+    auto result = w.get();  // result 的类型是 int
+
+    std::cout << "result: " << result << std::endl;
+
+    return 0;
+}
+```
+
+### 5. `decltype` 与 `std::declval`
+
+`std::declval` 是一个辅助函数，用于在编译时生成一个临时对象，常用于 `decltype` 的复杂表达式中。
+
+#### 5.1 `std::declval` 示例
+
+```cpp
+#include <iostream>
+#include <utility>
+
+template <typename T, typename U>
+auto add(T t, U u) -> decltype(std::declval<T>() + std::declval<U>()) {
+    return t + u;
+}
+
+int main() {
+    int x = 42;
+    double y = 100.5;
+    auto result = add(x, y);  // result 的类型是 double
+
+    std::cout << "result: " << result << std::endl;
+
+    return 0;
+}
+```
+
+### 6. 总结
+
+- **`decltype(expr)`**：返回表达式 `expr` 的类型。
+- **`decltype((expr))`**：返回表达式 `expr` 的引用类型（如果 `expr` 是左值）。
+- **`decltype` 与 `auto`**：结合使用可以实现更灵活的类型推导。
+- **`decltype` 在模板中的应用**：用于推导模板参数的类型。
+- **`std::declval`**：用于在编译时生成临时对象，常用于 `decltype` 的复杂表达式中。
+
+通过理解和使用 `decltype`，可以编写更灵活和高效的模板代码，提高程序的可维护性和扩展性。
